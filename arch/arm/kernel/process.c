@@ -280,6 +280,7 @@ void machine_halt(void)
  */
 void machine_power_off(void)
 {
+	preempt_disable();
 	smp_send_stop();
 
 	if (pm_power_off)
@@ -299,6 +300,7 @@ void machine_power_off(void)
  */
 void machine_restart(char *cmd)
 {
+	preempt_disable();
 	smp_send_stop();
 
 	/* Flush the console to make sure all the relevant messages make it
