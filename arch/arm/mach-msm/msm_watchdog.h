@@ -73,6 +73,11 @@ struct msm_watchdog_dump {
 void msm_wdog_fiq_setup(void *stack);
 extern unsigned int msm_wdog_fiq_length, msm_wdog_fiq_start;
 
+#ifdef CONFIG_MSM_WATCHDOG_V2
+void g_pet_watchdog(void);
+#define pet_watchdog(void) g_pet_watchdog(void);
+void msm_watchdog_reset(unsigned int timeout);
+#else
 #ifdef CONFIG_MSM_WATCHDOG
 void pet_watchdog(void);
 void msm_watchdog_reset(unsigned int timeout);
@@ -80,5 +85,5 @@ void msm_watchdog_reset(unsigned int timeout);
 static inline void pet_watchdog(void) { }
 static inline void msm_watchdog_reset(unsigned int timeout) { }
 #endif
-
+#endif
 #endif
