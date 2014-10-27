@@ -48,6 +48,7 @@ set_perm(0, 0, 0777, "/tmp/fstab.qcom");
 set_perm(0, 0, 0777, "/tmp/fstab_sys.qcom");
 set_perm(0, 0, 0777, "/tmp/init.target.rc");
 set_perm(0, 0, 0777, "/tmp/init.target.sys.rc");
+set_perm(0, 0, 0777, "/tmp/init.sys.rc");
 
 ui_print("Checking File system type...");
 ui_print("");

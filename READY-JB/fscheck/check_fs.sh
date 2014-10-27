@@ -25,12 +25,15 @@ else
 		echo "Replace fstab for /cache and /data..."
 		rm /tmp/ramdisk/fstab.qcom
 		cp /tmp/fstab.qcom /tmp/ramdisk/fstab.qcom
+		cp /tmp/fstab.qcom /tmp/ramdisk/fstab.jgedlte
 		cp /tmp/init.target.rc /tmp/ramdisk/init.target.rc
 	else
 		echo "Replace fstab for /cache and /data and /system..."
 		rm /tmp/ramdisk/fstab.qcom
 		cp /tmp/fstab_sys.qcom /tmp/ramdisk/fstab.qcom
+		cp /tmp/fstab.sys.qcom /tmp/ramdisk/fstab.jgedlte
 		cp /tmp/init.target.sys.rc /tmp/ramdisk/init.target.rc
+		cp /tmp/init.sys.rc /tmp/ramdisk/init.rc
 	fi
 		
 	echo "Repacking ramdisk..."
