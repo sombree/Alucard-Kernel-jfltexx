@@ -12,7 +12,7 @@
 /dev/block/platform/msm_sdcc.1/by-name/efs         /efs             ext4    nodev,noatime,noauto_da_alloc,discard,journal_async_commit,errors=panic   wait,check
 /dev/block/platform/msm_sdcc.1/by-name/userdata    /data            f2fs    nosuid,nodev,noatime,nodiratime,background_gc=on,user_xattr,acl  wait,check,encryptable=footer,length=-16384
 
-/devices/platform/msm_sdcc.2/mmc_host               auto                    vfat    default     voldmanaged=extSdCard:auto
+/devices/platform/msm_sdcc.2/mmc_host/mmc2          auto                    vfat    default     voldmanaged=extSdCard:auto
 /devices/platform/msm_hsusb_host/usb*sda            auto                    vfat    default     voldmanaged=UsbDriveA:auto
 /devices/platform/msm_hsusb_host/usb*sdb            auto                    vfat    default     voldmanaged=UsbDriveB:auto
 /devices/platform/msm_hsusb_host/usb*sdc            auto                    vfat    default     voldmanaged=UsbDriveC:auto
