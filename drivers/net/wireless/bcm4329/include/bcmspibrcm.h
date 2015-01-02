@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2010, Broadcom Corporation
  * All Rights Reserved.
- * 
+ *
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
  * the contents of this file may not be disclosed to third parties, copied
  * or duplicated in any form, in whole or in part, without the prior
@@ -29,8 +29,8 @@
 	} while (0)
 
 #define BLOCK_SIZE_F1		64
-#define BLOCK_SIZE_F2 		2048
-#define BLOCK_SIZE_F3 		2048
+#define BLOCK_SIZE_F2		2048
+#define BLOCK_SIZE_F3		2048
 
 /* internal return code */
 #define SUCCESS	0
@@ -46,13 +46,13 @@
 #define USE_MULTIBLOCK		0x4
 
 struct sdioh_info {
-	uint 		cfg_bar;		/* pci cfg address for bar */
+	uint		cfg_bar;		/* pci cfg address for bar */
 	uint32		caps;			/* cached value of capabilities reg */
 	void		*bar0;			/* BAR0 for PCI Device */
-	osl_t 		*osh;			/* osh handler */
+	osl_t		*osh;			/* osh handler */
 	void		*controller;	/* Pointer to SPI Controller's private data struct */
 
-	uint		lockcount; 		/* nest count of spi_lock() calls */
+	uint		lockcount;		/* nest count of spi_lock() calls */
 	bool		client_intr_enabled;	/* interrupt connnected flag */
 	bool		intr_handler_valid;	/* client driver interrupt handler valid */
 	sdioh_cb_fn_t	intr_handler;		/* registered interrupt handler */
@@ -64,31 +64,31 @@ struct sdioh_info {
 
 	uint32		controller_type;	/* Host controller type */
 	uint8		version;		/* Host Controller Spec Compliance Version */
-	uint 		irq;			/* Client irq */
-	uint32 		intrcount;		/* Client interrupts */
-	uint32 		local_intrcount;	/* Controller interrupts */
-	bool 		host_init_done;		/* Controller initted */
-	bool 		card_init_done;		/* Client SDIO interface initted */
-	bool 		polled_mode;		/* polling for command completion */
+	uint		irq;			/* Client irq */
+	uint32		intrcount;		/* Client interrupts */
+	uint32		local_intrcount;	/* Controller interrupts */
+	bool		host_init_done;		/* Controller initted */
+	bool		card_init_done;		/* Client SDIO interface initted */
+	bool		polled_mode;		/* polling for command completion */
 
 	bool		sd_use_dma;		/* DMA on CMD53 */
-	bool 		sd_blockmode;		/* sd_blockmode == FALSE => 64 Byte Cmd 53s. */
+	bool		sd_blockmode;		/* sd_blockmode == FALSE => 64 Byte Cmd 53s. */
 						/*  Must be on for sd_multiblock to be effective */
-	bool 		use_client_ints;	/* If this is false, make sure to restore */
+	bool		use_client_ints;	/* If this is false, make sure to restore */
 						/*  polling hack in wl_linux.c:wl_timer() */
-	int 		adapter_slot;		/* Maybe dealing with multiple slots/controllers */
-	int 		sd_mode;		/* SD1/SD4/SPI */
-	int 		client_block_size[SPI_MAX_IOFUNCS];		/* Blocksize */
-	uint32 		data_xfer_count;	/* Current transfer */
-	uint16 		card_rca;		/* Current Address */
-	uint8 		num_funcs;		/* Supported funcs on client */
-	uint32 		card_dstatus;		/* 32bit device status */
-	uint32 		com_cis_ptr;
-	uint32 		func_cis_ptr[SPI_MAX_IOFUNCS];
+	int		adapter_slot;		/* Maybe dealing with multiple slots/controllers */
+	int		sd_mode;		/* SD1/SD4/SPI */
+	int		client_block_size[SPI_MAX_IOFUNCS];		/* Blocksize */
+	uint32		data_xfer_count;	/* Current transfer */
+	uint16		card_rca;		/* Current Address */
+	uint8		num_funcs;		/* Supported funcs on client */
+	uint32		card_dstatus;		/* 32bit device status */
+	uint32		com_cis_ptr;
+	uint32		func_cis_ptr[SPI_MAX_IOFUNCS];
 	void		*dma_buf;
 	ulong		dma_phys;
-	int 		r_cnt;			/* rx count */
-	int 		t_cnt;			/* tx_count */
+	int		r_cnt;			/* rx count */
+	int		t_cnt;			/* tx_count */
 	uint32		wordlen;			/* host processor 16/32bits */
 	uint32		prev_fun;
 	uint32		chip;
