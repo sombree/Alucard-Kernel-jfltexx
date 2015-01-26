@@ -16,6 +16,8 @@
  *
  */
 
+#define pr_fmt(fmt) "%s:%s " fmt, KBUILD_MODNAME, __func__
+
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>
@@ -149,9 +151,8 @@ static int msm_thermal_cpufreq_callback(struct notifier_block *nfb,
 
 	switch (event) {
 	case CPUFREQ_INCOMPATIBLE:
-		pr_debug("%s: mitigating cpu %d to freq max: %u min: %u\n",
-				KBUILD_MODNAME, policy->cpu, max_freq_req,
-				min_freq_req);
+		pr_debug("mitigating CPU%d to freq max: %u min: %u\n",
+		policy->cpu, max_freq_req, min_freq_req);
 
 		cpufreq_verify_within_limits(policy, min_freq_req,
 				max_freq_req);
@@ -192,7 +193,7 @@ static int msm_thermal_get_freq_table(void)
 
 	table = cpufreq_frequency_get_table(0);
 	if (table == NULL) {
-		pr_debug("%s: error reading cpufreq table\n", KBUILD_MODNAME);
+		pr_err("error reading cpufreq table\n");
 		ret = -EINVAL;
 		goto fail;
 	}
@@ -261,8 +262,8 @@ static void __ref do_core_control(long temp)
 				continue;
 			ret = cpu_up(i);
 			if (ret)
-				pr_err("%s: Error %d online core %d\n",
-						KBUILD_MODNAME, ret, i);
+				pr_err("Error %d online core %d\n",
+						ret, i);
 			break;
 		}
 	}
@@ -342,7 +343,8 @@ static void __ref do_freq_control(long temp)
 		max_freq = table[max_idx -
 				msm_thermal_info_local.freq_step].frequency;
 		throttled = 1;
-	} else if (throttled && (max_freq < 0 || max_freq == MSM_CPUFREQ_NO_LIMIT))
+	} else if (throttled && (max_freq < 0 ||
+				max_freq == MSM_CPUFREQ_NO_LIMIT))
 		throttled = 0;
 
 	/* Update new limits */
@@ -631,7 +633,7 @@ static ssize_t __ref store_cc_enabled(struct kobject *kobj,
 	mutex_lock(&core_control_mutex);
 	ret = kstrtoint(buf, 10, &val);
 	if (ret) {
-		pr_err("%s: Invalid input %s\n", KBUILD_MODNAME, buf);
+		pr_err("Invalid input %s. err:%d\n", buf, ret);
 		goto done_store_cc;
 	}
 
@@ -640,12 +642,12 @@ static ssize_t __ref store_cc_enabled(struct kobject *kobj,
 
 	core_control = !!val;
 	if (core_control) {
-		pr_info("%s: Core control enabled\n", KBUILD_MODNAME);
+		pr_info("Core control enabled\n");
 		register_cpu_notifier(&msm_thermal_cpu_notifier);
 		update_offline_cores(cpus_offlined);
 		enabled = 1;
 	} else {
-		pr_info("%s: Core control disabled\n", KBUILD_MODNAME);
+		pr_info("Core control disabled\n");
 		unregister_cpu_notifier(&msm_thermal_cpu_notifier);
 		enabled = 0;
 	}
@@ -670,13 +672,12 @@ static ssize_t __ref store_cpus_offlined(struct kobject *kobj,
 	mutex_lock(&core_control_mutex);
 	ret = kstrtouint(buf, 10, &val);
 	if (ret) {
-		pr_err("%s: Invalid input %s\n", KBUILD_MODNAME, buf);
+		pr_err("Invalid input %s. err:%d\n", buf, ret);
 		goto done_cc;
 	}
 
 	if (intelli_enabled) {
-		pr_err("%s: Ignoring request; polling thread is enabled.\n",
-				KBUILD_MODNAME);
+		pr_err("Ignoring request; polling thread is enabled.\n");
 		goto done_cc;
 	}
 
@@ -717,23 +718,21 @@ static __init int msm_thermal_add_cc_nodes(void)
 
 	module_kobj = kset_find_obj(module_kset, KBUILD_MODNAME);
 	if (!module_kobj) {
-		pr_err("%s: cannot find kobject for module\n",
-			KBUILD_MODNAME);
+		pr_err("cannot find kobject\n");
 		ret = -ENOENT;
 		goto done_cc_nodes;
 	}
 
 	cc_kobj = kobject_create_and_add("core_control", module_kobj);
 	if (!cc_kobj) {
-		pr_err("%s: cannot create core control kobj\n",
-				KBUILD_MODNAME);
+		pr_err("cannot create core control kobj\n");
 		ret = -ENOMEM;
 		goto done_cc_nodes;
 	}
 
 	ret = sysfs_create_group(cc_kobj, &cc_attr_group);
 	if (ret) {
-		pr_err("%s: cannot create group\n", KBUILD_MODNAME);
+		pr_err("cannot create sysfs group. err:%d\n", ret);
 		goto done_cc_nodes;
 	}
 
@@ -768,8 +767,8 @@ int __devinit msm_thermal_init(struct msm_thermal_data *pdata)
 	ret = cpufreq_register_notifier(&msm_thermal_cpufreq_notifier,
 			CPUFREQ_POLICY_NOTIFIER);
 	if (ret)
-		pr_err("%s: cannot register cpufreq notifier\n",
-			KBUILD_MODNAME);
+		pr_err("cannot register cpufreq notifier. err:%d\n", ret);
+
 	INIT_DELAYED_WORK(&check_temp_work, check_temp);
 	if (intelli_enabled)
 		schedule_delayed_work(&check_temp_work,
