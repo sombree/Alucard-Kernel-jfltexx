@@ -144,6 +144,8 @@ else
 DRIVER_TYPE ?= y
 endif
 
+DHDCFLAGS += -DCUSTOM_SET_SHORT_DWELL_TIME
+
 #########################
 # Chip dependent feature
 #########################
