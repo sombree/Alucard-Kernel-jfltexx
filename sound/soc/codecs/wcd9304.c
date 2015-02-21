@@ -6488,6 +6488,7 @@ static int sitar_codec_probe(struct snd_soc_codec *codec)
 #endif
 
 	return ret;
+	/*
 err_hphr_ocp_irq:
 	wcd9xxx_free_irq(codec->control_data,
 			SITAR_IRQ_HPH_PA_OCPL_FAULT, sitar);
@@ -6509,8 +6510,9 @@ err_potential_irq:
 err_remove_irq:
 	wcd9xxx_free_irq(codec->control_data,
 			SITAR_IRQ_MBHC_INSERTION, sitar);
-err_hwdep:
 err_insert_irq:
+*/
+err_hwdep:
 	kfree(sitar->fw_data);
 err_nomem_slimch:
 err_pdata:

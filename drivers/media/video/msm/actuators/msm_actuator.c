@@ -139,7 +139,6 @@ static int32_t msm_actuator_init_focus(struct msm_actuator_ctrl_t *a_ctrl,
 		if (rc < 0)
 			break;
 	}
-
 	a_ctrl->curr_step_pos = 0;
 	CDBG("%s Exit:%d\n", __func__, rc);
 	return rc;
