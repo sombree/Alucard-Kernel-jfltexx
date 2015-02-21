@@ -480,7 +480,6 @@ ssize_t mdp4_dsi_video_show_event(struct device *dev,
 	spin_lock_irqsave(&vctrl->spin_lock, flags);
 	timestamp = vctrl->vsync_time;
 	spin_unlock_irqrestore(&vctrl->spin_lock, flags);
-
 	ret = wait_event_interruptible(vctrl->wait_queue,
 			!ktime_equal(timestamp, vctrl->vsync_time) &&
 			vctrl->vsync_irq_enabled);
@@ -876,7 +875,6 @@ int mdp4_dsi_video_off(struct platform_device *pdev)
 	}
 
 	atomic_set(&vctrl->suspend, 1);
-
 	if (vctrl->vsync_irq_enabled) {
 		vctrl->vsync_irq_enabled = 0;
 		mdp4_video_vsync_irq_ctrl(cndx, 0);
