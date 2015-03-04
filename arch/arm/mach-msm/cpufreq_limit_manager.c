@@ -22,13 +22,8 @@
 #include <linux/cpufreq.h>
 #include <mach/cpufreq.h>
 #include <linux/cpu.h>
+#include <linux/fb.h>
 #include <linux/cpufreq_limit_manager.h>
-
-#if defined(CONFIG_POWERSUSPEND)
-#include <linux/powersuspend.h>
-#elif defined(CONFIG_HAS_EARLYSUSPEND)
-#include <linux/earlysuspend.h>
-#endif  /* CONFIG_POWERSUSPEND || CONFIG_HAS_EARLYSUSPEND */
 
 unsigned int scaling_min_suspend_freq = 378000;
 unsigned int scaling_max_suspend_freq = CPU_MAX_FREQ;
@@ -38,6 +33,8 @@ unsigned int scaling_max_gps_freq = CPU_MAX_FREQ;
 static bool suspended = false;
 static bool gps_status = false;
 static bool oncall_status = false;
+
+static struct notifier_block notif;
 
 int update_cpufreq_limit(unsigned int limit_type, bool limit_status)
 {
@@ -123,41 +120,45 @@ int update_cpufreq_limit(unsigned int limit_type, bool limit_status)
 }
 EXPORT_SYMBOL_GPL(update_cpufreq_limit);
 
-#if defined(CONFIG_POWERSUSPEND) || defined(CONFIG_HAS_EARLYSUSPEND)
-#ifdef CONFIG_POWERSUSPEND
-static void __ref cpufreq_limit_suspend(struct power_suspend *handler)
-#else
-static void __ref cpufreq_limit_suspend(struct early_suspend *handler)
-#endif
+static void __cpufreq_limit_suspend(void)
 {
  	/* SUSPEND */
 	update_cpufreq_limit(0, true);
+	pr_info("cpufreq limit manager suspended.\n");
 }
 
-#ifdef CONFIG_POWERSUSPEND
-static void __cpuinit cpufreq_limit_late_resume(struct power_suspend *handler)
-#else
-static void __cpuinit cpufreq_limit_late_resume(
-				struct early_suspend *handler)
-#endif
+static void __cpufreq_limit_resume(void)
 {
 	/* RESUME */
 	update_cpufreq_limit(0, false);
+	pr_info("cpufreq limit manager resumed.\n");
 }
 
-#ifdef CONFIG_POWERSUSPEND
-static struct power_suspend cpufreq_limit_suspend_driver = {
-	.suspend = cpufreq_limit_suspend,
-	.resume = cpufreq_limit_late_resume,
-};
-#else
-static struct early_suspend cpufreq_limit_suspend_driver = {
-	.level = EARLY_SUSPEND_LEVEL_DISABLE_FB + 10,
-	.suspend = cpufreq_limit_suspend,
-	.resume = cpufreq_limit_late_resume,
-};
-#endif
-#endif  /* CONFIG_POWERSUSPEND || CONFIG_HAS_EARLYSUSPEND */
+static int fb_notifier_callback(struct notifier_block *self,
+				unsigned long event, void *data)
+{
+	struct fb_event *evdata = data;
+	int *blank;
+
+	if (evdata && evdata->data && event == FB_EVENT_BLANK) {
+		blank = evdata->data;
+		switch (*blank) {
+			case FB_BLANK_UNBLANK:
+				/* display on */
+				__cpufreq_limit_resume();
+				break;
+			case FB_BLANK_POWERDOWN:
+			case FB_BLANK_HSYNC_SUSPEND:
+			case FB_BLANK_VSYNC_SUSPEND:
+			case FB_BLANK_NORMAL:
+				/* display off */
+				__cpufreq_limit_suspend();
+				break;
+		}
+	}
+
+	return NOTIFY_OK;
+}
 
 static ssize_t show_scaling_min_suspend_freq(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
@@ -303,11 +304,10 @@ static int __init cpufreq_limit_manager_init(void)
 		return -EFAULT;
 	}
 
-#if defined(CONFIG_POWERSUSPEND)
-	register_power_suspend(&cpufreq_limit_suspend_driver);
-#elif defined(CONFIG_HAS_EARLYSUSPEND)
-	register_early_suspend(&cpufreq_limit_suspend_driver);
-#endif  /* CONFIG_POWERSUSPEND || CONFIG_HAS_EARLYSUSPEND */
+	notif.notifier_call = fb_notifier_callback;
+	if (fb_register_client(&notif)) {
+		pr_err("Failed to register FB notifier callback for cpufreq limit manager\n");
+	}
 
 	return (rc);
 }
