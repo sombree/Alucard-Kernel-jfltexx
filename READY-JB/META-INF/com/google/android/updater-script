@@ -20,8 +20,6 @@ ui_print("Mounting system");
 ui_print("");
 run_program("/sbin/busybox", "mount", "/system");
 run_program("/sbin/busybox", "mount", "/data");
-#mount("ext4", "EMMC", "/dev/block/platform/msm_sdcc.1/by-name/system", "/system");
-#mount("ext4", "EMMC", "/dev/block/platform/msm_sdcc.1/by-name/userdata", "/data");
 
 show_progress(0.100000, 60);
 
@@ -41,19 +39,6 @@ package_extract_file("boot.img", "/tmp/boot.img");
 ui_print("Setting permissions");
 ui_print("");
 set_perm(0, 0, 0777, "/tmp/flash_kernel.sh");
-set_perm(0, 0, 0777, "/tmp/check_fs.sh");
-set_perm(0, 0, 0777, "/tmp/mkbootimg.sh");
-set_perm(0, 0, 0777, "/tmp/mkbootimg");
-set_perm(0, 0, 0777, "/tmp/unpackbootimg");
-set_perm(0, 0, 0777, "/tmp/fstab.qcom");
-set_perm(0, 0, 0777, "/tmp/fstab_sys.qcom");
-set_perm(0, 0, 0777, "/tmp/init.target.rc");
-set_perm(0, 0, 0777, "/tmp/init.target.sys.rc");
-set_perm(0, 0, 0777, "/tmp/init.sys.rc");
-
-ui_print("Checking File system type...");
-ui_print("");
-run_program("/tmp/check_fs.sh");
 
 ui_print("Flashing Kernel");
 ui_print("");
