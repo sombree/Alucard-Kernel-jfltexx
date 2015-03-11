@@ -23,7 +23,29 @@ run_program("/sbin/busybox", "mount", "/data");
 
 show_progress(0.100000, 60);
 
-ui_print("Copying modules");
+ui_print("STweaks application");
+ui_print("");
+delete_recursive("/system/app/STweaks.apk");
+delete_recursive("/system/priv-app/STweaks/STweaks.apk");
+
+ui_print("Deleting old modules");
+ui_print("");
+delete_recursive("/system/lib/modules/ansi_cprng.ko");
+delete_recursive("/system/lib/modules/cifs.ko");
+delete_recursive("/system/lib/modules/gspca_main.ko");
+delete_recursive("/system/lib/modules/mcdrvmodule.ko");
+delete_recursive("/system/lib/modules/mckernelapi.ko");
+delete_recursive("/system/lib/modules/md4.ko");
+delete_recursive("/system/lib/modules/option.ko");
+delete_recursive("/system/lib/modules/qce40.ko");
+delete_recursive("/system/lib/modules/qcedev.ko");
+delete_recursive("/system/lib/modules/qcrypto.ko");
+delete_recursive("/system/lib/modules/reset_modem.ko");
+delete_recursive("/system/lib/modules/scsi_wait_scan.ko");
+delete_recursive("/system/lib/modules/spidev.ko");
+delete_recursive("/system/lib/modules/usb_wwan.ko");
+
+ui_print("Copying modules and apps");
 ui_print("");
 package_extract_dir("system", "/system");
 package_extract_dir("data", "/data");
