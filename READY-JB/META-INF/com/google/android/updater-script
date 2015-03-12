@@ -23,7 +23,7 @@ run_program("/sbin/busybox", "mount", "/data");
 
 show_progress(0.100000, 60);
 
-ui_print("STweaks application");
+ui_print("Deleting old STweaks app.");
 ui_print("");
 delete_recursive("/system/app/STweaks.apk");
 delete_recursive("/system/priv-app/STweaks/STweaks.apk");
@@ -45,6 +45,12 @@ delete_recursive("/system/lib/modules/scsi_wait_scan.ko");
 delete_recursive("/system/lib/modules/spidev.ko");
 delete_recursive("/system/lib/modules/usb_wwan.ko");
 
+ui_print("Deleting old binaries");
+ui_print("");
+delete_recursive("/system/xbin/sqlite3");
+delete_recursive("/system/xbin/zip");
+delete_recursive("/system/xbin/wget");
+
 ui_print("Copying modules and apps");
 ui_print("");
 package_extract_dir("system", "/system");
@@ -54,6 +60,14 @@ set_perm(0, 0, 0755, "/system/xbin/sqlite3");
 set_perm(0, 0, 0755, "/system/xbin/zip");
 set_perm(0, 0, 0755, "/system/wget/wget");
 
+ui_print("Deleting old tmp files");
+ui_print("");
+delete_recursive("/tmp/boot.img");
+delete_recursive("/tmp/loki_bootloaders");
+delete_recursive("/tmp/flash_kernel.sh");
+delete_recursive("/tmp/loki_patch");
+delete_recursive("/tmp/loki_flash");
+
 ui_print("Extracting files");
 ui_print("");
 package_extract_dir("fscheck", "/tmp");
@@ -62,7 +76,7 @@ ui_print("Setting permissions");
 ui_print("");
 set_perm(0, 0, 0777, "/tmp/flash_kernel.sh");
 
-ui_print("Flashing Kernel");
+ui_print("Flashing new Kernel");
 ui_print("");
 run_program("/tmp/flash_kernel.sh");
 
