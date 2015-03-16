@@ -300,7 +300,7 @@ static int __init power_suspend_init(void)
 	suspend_mode = POWER_SUSPEND_PANEL;	/* Yank555.lu : Default to display panel suspend_mode */
 	suspend_mode = POWER_SUSPEND_AUTOSLEEP; /* Yank555.lu : Default to autosleep suspend_mode */
 #endif
-	suspend_mode = POWER_SUSPEND_PANEL;	/* Yank555.lu : Default to display panel suspend_mode */
+	suspend_mode = POWER_SUSPEND_AUTOSLEEP; /* Yank555.lu : Default to autosleep suspend_mode */
 
 	return 0;
 }
