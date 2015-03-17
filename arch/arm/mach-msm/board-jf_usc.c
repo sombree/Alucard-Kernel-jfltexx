@@ -109,7 +109,9 @@
 #include "devices-msm8x60.h"
 #include "smd_private.h"
 #include "sysmon.h"
+#ifdef CONFIG_MSM_BT_POWER
 #include <linux/bluetooth-power.h>
+#endif
 
 #if defined(CONFIG_VIDEO_MHL_V2)
 #include <linux/sii8240.h>
@@ -5238,6 +5240,14 @@ static void __init apq8064ab_update_retention_spm(void)
 	}
 }
 
+#ifdef CONFIG_MSM_BT_POWER
+struct bluetooth_power_platform_data *bt_power_pdata;
+
+static struct platform_device msm_bt_power_device = {
+	.name = "bt_power",
+	.id = -1,
+};
+
 static void __init apq8064_bt_power_init(void)
 {
 	struct device *dev;
@@ -5267,6 +5277,7 @@ static void __init apq8064_bt_power_init(void)
 		pr_err("\n%s: ***** Platform dev. registration success *****\n", __func__);
 
 }
+#endif
 
 #ifdef CONFIG_SERIAL_MSM_HS
 static struct msm_serial_hs_platform_data apq8064_uartdm_gsbi4_pdata = {
@@ -5297,6 +5308,14 @@ static void __init apq8064ab_update_retention_spm(void)
 	}
 }
 
+#ifdef CONFIG_MSM_BT_POWER
+struct bluetooth_power_platform_data *bt_power_pdata;
+
+static struct platform_device msm_bt_power_device = {
+	.name = "bt_power",
+	.id = -1,
+};
+
 static void __init apq8064_bt_power_init(void)
 {
 	struct device *dev;
@@ -5326,6 +5345,7 @@ static void __init apq8064_bt_power_init(void)
 		pr_err("\n%s: ***** Platform dev. registration success *****\n", __func__);
 
 }
+#endif
 
 static void __init apq8064_common_init(void)
 {
@@ -5375,7 +5395,9 @@ static void __init apq8064_common_init(void)
 						&apq8064_qup_spi_gsbi5_pdata;
 	apq8064_init_pmic();
 
+#ifdef CONFIG_MSM_BT_POWER
 	apq8064_bt_power_init();
+#endif
 
 	if (machine_is_apq8064_liquid())
 		msm_otg_pdata.mhl_enable = true;

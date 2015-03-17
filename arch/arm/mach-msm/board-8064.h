@@ -121,7 +121,9 @@ void apq8064_init_gpu(void);
 void apq8064_pm8xxx_gpio_mpp_init(void);
 void __init configure_apq8064_pm8917_power_grid(void);
 
+#ifdef CONFIG_MSM_BT_POWER
 #define QCA6174_BT_RST_N     17
+#endif
 
 void msm8960_init_battery(void);
 int msm8960_get_cable_status(void);
