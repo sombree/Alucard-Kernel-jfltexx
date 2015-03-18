@@ -395,7 +395,6 @@ static void msm_fb_shutdown(struct platform_device *pdev)
        msm_fb_release_all(mfd->fbi, true);
        unlock_fb_info(mfd->fbi);
 }
-
 static int msm_fb_probe(struct platform_device *pdev)
 {
 	struct msm_fb_data_type *mfd;
@@ -1574,28 +1573,28 @@ static int msm_fb_register(struct msm_fb_data_type *mfd)
 
 	if (fbi->fix.smem_start) {
 		msm_iommu_map_contig_buffer(fbi->fix.smem_start,
-						DISPLAY_WRITE_DOMAIN,
-						GEN_POOL,
-						fbi->fix.smem_len,
-						SZ_4K,
-						0,
-						&(mfd->display_iova));
+					    DISPLAY_WRITE_DOMAIN,
+					    GEN_POOL,
+					    fbi->fix.smem_len,
+					    SZ_4K,
+					    0,
+					    &(mfd->display_iova));
 
 		msm_iommu_map_contig_buffer(fbi->fix.smem_start,
-						DISPLAY_READ_DOMAIN,
-						GEN_POOL,
-						fbi->fix.smem_len,
-						SZ_4K,
-						0,
-						&(mfd->display_iova));
+					    DISPLAY_READ_DOMAIN,
+					    GEN_POOL,
+					    fbi->fix.smem_len,
+					    SZ_4K,
+					    0,
+					    &(mfd->display_iova));
 
 		msm_iommu_map_contig_buffer(fbi->fix.smem_start,
-						ROTATOR_SRC_DOMAIN,
-						GEN_POOL,
-						fbi->fix.smem_len,
-						SZ_4K,
-						0,
-						&(mfd->rotator_iova));
+					    ROTATOR_SRC_DOMAIN,
+					    GEN_POOL,
+					    fbi->fix.smem_len,
+					    SZ_4K,
+					    0,
+					    &(mfd->rotator_iova));
 	}
 
 	if ((!bf_supported || mfd->index == 0) && fbi->screen_base)
@@ -1667,7 +1666,7 @@ static int msm_fb_register(struct msm_fb_data_type *mfd)
 #ifdef CONFIG_HAS_EARLYSUSPEND
 
 	if (hdmi_prim_display ||
-		(mfd->panel_info.type != DTV_PANEL)) {
+	    (mfd->panel_info.type != DTV_PANEL)) {
 		mfd->early_suspend.suspend = msmfb_early_suspend;
 		mfd->early_suspend.resume = msmfb_early_resume;
 		mfd->early_suspend.level = EARLY_SUSPEND_LEVEL_DISABLE_FB - 2;
