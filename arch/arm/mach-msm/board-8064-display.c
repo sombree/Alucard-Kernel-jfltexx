@@ -895,6 +895,12 @@ static int mipi_panel_power_oled(int enable)
 #ifdef CONFIG_LCD_NOTIFY
 		lcd_notifier_call_chain(LCD_EVENT_ON_START, NULL);
 #endif
+#ifdef CONFIG_POWERSUSPEND
+		if (suspend_mode == POWER_SUSPEND_PANEL)
+			set_power_suspend_state_panel_hook(
+				POWER_SUSPEND_INACTIVE);
+#endif
+
 		/* 3000mv VCI(ANALOG) */
 		rc = regulator_set_optimum_mode(reg_L30, 100000);
 		if (rc < 0) {
@@ -928,17 +934,17 @@ static int mipi_panel_power_oled(int enable)
 #ifdef CONFIG_LCD_NOTIFY
 		lcd_notifier_call_chain(LCD_EVENT_ON_END, NULL);
 #endif
-#ifdef CONFIG_POWERSUSPEND
-		if (suspend_mode == POWER_SUSPEND_PANEL)
-			set_power_suspend_state_panel_hook(
-				POWER_SUSPEND_INACTIVE);
-#endif
 	} else {
 
 		pr_info("[lcd] PANEL OFF\n");
 
 #ifdef CONFIG_LCD_NOTIFY
 		lcd_notifier_call_chain(LCD_EVENT_OFF_START, NULL);
+#endif
+#ifdef CONFIG_POWERSUSPEND
+		if (suspend_mode == POWER_SUSPEND_PANEL)
+			set_power_suspend_state_panel_hook(
+				POWER_SUSPEND_ACTIVE);
 #endif
 
 #ifdef CONFIG_LCD_VDD3_BY_PMGPIO
@@ -970,11 +976,6 @@ static int mipi_panel_power_oled(int enable)
 
 #ifdef CONFIG_LCD_NOTIFY
 		lcd_notifier_call_chain(LCD_EVENT_OFF_END, NULL);
-#endif
-#ifdef CONFIG_POWERSUSPEND
-		if (suspend_mode == POWER_SUSPEND_PANEL)
-			set_power_suspend_state_panel_hook(
-				POWER_SUSPEND_ACTIVE);
 #endif
 	}
 
