@@ -2484,8 +2484,8 @@ void *qce_open(struct platform_device *pdev, int *rc)
 	if (!IS_ERR(ce_core_src_clk)) {
 		pce_dev->ce_core_src_clk = ce_core_src_clk;
 
-		/* Set the core src clk @100Mhz */
-		ret = clk_set_rate(pce_dev->ce_core_src_clk, 100000000);
+		/* Set the core src clk @120Mhz */
+		ret = clk_set_rate(pce_dev->ce_core_src_clk, 120000000);
 		if (ret) {
 			clk_put(pce_dev->ce_core_src_clk);
 			goto err;

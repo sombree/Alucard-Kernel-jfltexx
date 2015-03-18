@@ -1986,7 +1986,7 @@ static struct rcg_clk ce3_src_clk = {
 	.c = {
 		.dbg_name = "ce3_src_clk",
 		.ops = &clk_ops_rcg,
-		VDD_DIG_FMAX_MAP2(LOW, 50000000, NOMINAL, 100000000),
+		VDD_DIG_FMAX_MAP2(LOW, 50000000, NOMINAL, 120000000),
 		CLK_INIT(ce3_src_clk.c),
 	},
 };
