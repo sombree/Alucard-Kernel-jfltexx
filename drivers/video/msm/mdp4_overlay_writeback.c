@@ -203,12 +203,15 @@ int mdp4_overlay_writeback_off(struct platform_device *pdev)
 	complete(&vctrl->ov_comp);
 	msleep(20);
 	mdp_clk_ctrl(1);
+
 	/* sanity check, free pipes besides base layer */
 	mdp4_overlay_unset_mixer(pipe->mixer_num);
 	mdp4_mixer_stage_down(pipe, 1);
 	mdp4_overlay_pipe_free(pipe, 1);
 	vctrl->base_pipe = NULL;
+
 	mdp_clk_ctrl(0);
+
 	undx =  vctrl->update_ndx;
 	vp = &vctrl->vlist[undx];
 	if (vp->update_cnt) {
@@ -401,6 +404,7 @@ int mdp4_wfd_pipe_commit(struct msm_fb_data_type *mfd,
 	mdp4_overlay_iommu_unmap_freelist(mixer);
 
 	mdp_clk_ctrl(1);
+
 	pipe = vp->plist;
 	for (i = 0; i < OVERLAY_PIPE_MAX; i++, pipe++) {
 		if (pipe->pipe_used) {
