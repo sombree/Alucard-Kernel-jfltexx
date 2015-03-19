@@ -484,6 +484,9 @@ static int mipi_dsi_power(int enable)
 	if (enable) {
 
 		pr_info("[lcd] DSI ON\n");
+#ifdef CONFIG_LCD_NOTIFY
+		lcd_notifier_call_chain(LCD_EVENT_ON_START, NULL);
+#endif
 		rc = regulator_set_optimum_mode(reg_l2, 100000);
 		if (rc < 0) {
 			pr_err("set_optimum_mode L2 failed, rc=%d\n", rc);
@@ -495,8 +498,19 @@ static int mipi_dsi_power(int enable)
 			pr_err("enable L2 failed, rc=%d\n", rc);
 			return -ENODEV;
 		}
+#ifdef CONFIG_LCD_NOTIFY
+		lcd_notifier_call_chain(LCD_EVENT_ON_END, NULL);
+#endif
+#ifdef CONFIG_POWERSUSPEND
+		if (suspend_mode == POWER_SUSPEND_PANEL)
+			set_power_suspend_state_panel_hook(
+				POWER_SUSPEND_INACTIVE);
+#endif
 	} else {
 
+#ifdef CONFIG_LCD_NOTIFY
+		lcd_notifier_call_chain(LCD_EVENT_OFF_START, NULL);
+#endif
 		pr_info("[lcd] DSI OFF\n");
 		rc = regulator_set_optimum_mode(reg_l2, 100);
 		if (rc < 0) {
@@ -509,6 +523,14 @@ static int mipi_dsi_power(int enable)
 			pr_err("disable reg_L2 failed, rc=%d\n", rc);
 			return -ENODEV;
 		}
+#ifdef CONFIG_LCD_NOTIFY
+		lcd_notifier_call_chain(LCD_EVENT_OFF_END, NULL);
+#endif
+#ifdef CONFIG_POWERSUSPEND
+		if (suspend_mode == POWER_SUSPEND_PANEL)
+			set_power_suspend_state_panel_hook(
+				POWER_SUSPEND_ACTIVE);
+#endif
 	}
 
 	return rc;
@@ -892,15 +914,6 @@ static int mipi_panel_power_oled(int enable)
 
 		pr_info("[lcd] PANEL ON\n");
 
-#ifdef CONFIG_LCD_NOTIFY
-		lcd_notifier_call_chain(LCD_EVENT_ON_START, NULL);
-#endif
-#ifdef CONFIG_POWERSUSPEND
-		if (suspend_mode == POWER_SUSPEND_PANEL)
-			set_power_suspend_state_panel_hook(
-				POWER_SUSPEND_INACTIVE);
-#endif
-
 		/* 3000mv VCI(ANALOG) */
 		rc = regulator_set_optimum_mode(reg_L30, 100000);
 		if (rc < 0) {
@@ -930,22 +943,9 @@ static int mipi_panel_power_oled(int enable)
 			return -ENODEV;
 		}
 #endif
-
-#ifdef CONFIG_LCD_NOTIFY
-		lcd_notifier_call_chain(LCD_EVENT_ON_END, NULL);
-#endif
 	} else {
 
 		pr_info("[lcd] PANEL OFF\n");
-
-#ifdef CONFIG_LCD_NOTIFY
-		lcd_notifier_call_chain(LCD_EVENT_OFF_START, NULL);
-#endif
-#ifdef CONFIG_POWERSUSPEND
-		if (suspend_mode == POWER_SUSPEND_PANEL)
-			set_power_suspend_state_panel_hook(
-				POWER_SUSPEND_ACTIVE);
-#endif
 
 #ifdef CONFIG_LCD_VDD3_BY_PMGPIO
 		gpio_set_value_cansleep(pmic_gpio4, 0);
@@ -973,10 +973,6 @@ static int mipi_panel_power_oled(int enable)
 			pr_err("disable reg_L30 failed, rc=%d\n", rc);
 			return -ENODEV;
 		}
-
-#ifdef CONFIG_LCD_NOTIFY
-		lcd_notifier_call_chain(LCD_EVENT_OFF_END, NULL);
-#endif
 	}
 
 	return rc;
