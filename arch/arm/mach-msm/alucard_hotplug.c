@@ -352,7 +352,6 @@ static void __alucard_hotplug_suspend(void)
 			mutex_lock(&hotplug_tuners_ins.alu_hotplug_mutex);
 			hotplug_tuners_ins.suspended = true;
 			mutex_unlock(&hotplug_tuners_ins.alu_hotplug_mutex);
-			pr_info("Alucard HotPlug suspended.\n");
 	}
 	stop_rq_work();
 }
@@ -370,7 +369,6 @@ static void __ref __alucard_hotplug_resume(void)
 			/* wake up everyone */
 			hotplug_tuners_ins.force_cpu_up = true;
 			mutex_unlock(&hotplug_tuners_ins.alu_hotplug_mutex);
-			pr_info("Alucard HotPlug Resumed.\n");
 	}
 	start_rq_work();
 }

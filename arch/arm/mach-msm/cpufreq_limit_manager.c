@@ -141,7 +141,6 @@ static void __cpufreq_limit_suspend(void)
 {
  	/* SUSPEND */
 	update_cpufreq_limit(0, true);
-	pr_info("cpufreq limit manager suspended.\n");
 }
 
 #if defined(CONFIG_POWERSUSPEND) || defined(CONFIG_HAS_EARLYSUSPEND)
@@ -157,7 +156,6 @@ static void __cpufreq_limit_resume(void)
 {
 	/* RESUME */
 	update_cpufreq_limit(0, false);
-	pr_info("cpufreq limit manager resumed.\n");
 }
 
 #if defined(CONFIG_POWERSUSPEND) || defined(CONFIG_HAS_EARLYSUSPEND)
