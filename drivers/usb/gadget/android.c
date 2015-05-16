@@ -2271,7 +2271,7 @@ functions_store(struct device *pdev, struct device_attribute *attr,
 	char *name;
 	char buf[256], *b;
 	int err;
-	int hid_usb_enabled = 0;
+	bool hid_usb_enabled = false;
 
 	mutex_lock(&dev->mutex);
 
@@ -2324,9 +2324,9 @@ functions_store(struct device *pdev, struct device_attribute *attr,
 						name);
 				if (!strcmp(name, "hid")) {
 					if (hid_usb.hid_enabled == 1)
-						hid_usb_enabled = 1;
+						hid_usb_enabled = true;
 					else
-						hid_usb_enabled = 0;
+						hid_usb_enabled = false;
 				}
 			}
 		}
