@@ -498,16 +498,14 @@ static void nightmare_check_cpu(struct cpufreq_nightmare_cpuinfo *this_nightmare
 	unsigned int tmp_freq = 0;
 	unsigned int cur_load = 0;
 	int io_busy = nightmare_tuners_ins.io_is_busy;
-	unsigned int cpu;
 
 	policy = this_nightmare_cpuinfo->cur_policy;
 	if ((policy == NULL)
 		 || (!this_nightmare_cpuinfo->freq_table))
 		return;
 
-	cpu = this_nightmare_cpuinfo->cpu;
-
-	cur_idle_time = get_cpu_idle_time(cpu, &cur_wall_time, io_busy);
+	cur_idle_time = get_cpu_idle_time(this_nightmare_cpuinfo->cpu,
+		&cur_wall_time, io_busy);
 
 	wall_time = (unsigned int)
 			(cur_wall_time - this_nightmare_cpuinfo->prev_cpu_wall);
@@ -552,11 +550,9 @@ static void do_nightmare_timer(struct work_struct *work)
 {
 	struct cpufreq_nightmare_cpuinfo *this_nightmare_cpuinfo =
 		container_of(work, struct cpufreq_nightmare_cpuinfo, work.work);
-	unsigned int cpu;
 	int delay;
 
 	mutex_lock(&this_nightmare_cpuinfo->timer_mutex);
-	cpu = this_nightmare_cpuinfo->cpu;
 
 	nightmare_check_cpu(this_nightmare_cpuinfo);
 
@@ -568,7 +564,8 @@ static void do_nightmare_timer(struct work_struct *work)
 		delay = max(delay - (jiffies % delay), usecs_to_jiffies(nightmare_tuners_ins.sampling_rate / 2));
 	}
 
-	mod_delayed_work_on(cpu, system_wq, &this_nightmare_cpuinfo->work, delay);
+	mod_delayed_work_on(this_nightmare_cpuinfo->cpu,
+		system_wq, &this_nightmare_cpuinfo->work, delay);
 	mutex_unlock(&this_nightmare_cpuinfo->timer_mutex);
 }
 
@@ -595,7 +592,8 @@ static int cpufreq_governor_nightmare(struct cpufreq_policy *policy,
 
 		this_nightmare_cpuinfo->cur_policy = policy;
 
-		this_nightmare_cpuinfo->prev_cpu_idle = get_cpu_idle_time(this_nightmare_cpuinfo->cpu, &this_nightmare_cpuinfo->prev_cpu_wall, io_busy);
+		this_nightmare_cpuinfo->prev_cpu_idle = get_cpu_idle_time(this_nightmare_cpuinfo->cpu,
+			&this_nightmare_cpuinfo->prev_cpu_wall, io_busy);
 
 		nightmare_enable++;
 		/*
@@ -623,7 +621,8 @@ static int cpufreq_governor_nightmare(struct cpufreq_policy *policy,
 		}
 
 		INIT_DEFERRABLE_WORK(&this_nightmare_cpuinfo->work, do_nightmare_timer);
-		mod_delayed_work_on(this_nightmare_cpuinfo->cpu, system_wq, &this_nightmare_cpuinfo->work, delay);
+		mod_delayed_work_on(this_nightmare_cpuinfo->cpu,
+			system_wq, &this_nightmare_cpuinfo->work, delay);
 
 		break;
 	case CPUFREQ_GOV_STOP:

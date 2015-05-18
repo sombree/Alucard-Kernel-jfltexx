@@ -206,16 +206,14 @@ static void darkness_check_cpu(struct cpufreq_darkness_cpuinfo *this_darkness_cp
 	unsigned int next_freq = 0;
 	unsigned int cur_load = 0;
 	int io_busy = darkness_tuners_ins.io_is_busy;
-	unsigned int cpu;
 
 	policy = this_darkness_cpuinfo->cur_policy;
 	if ((policy == NULL)
 		 || (!this_darkness_cpuinfo->freq_table))
 		return;
 
-	cpu = this_darkness_cpuinfo->cpu;
-
-	cur_idle_time = get_cpu_idle_time(cpu, &cur_wall_time, io_busy);
+	cur_idle_time = get_cpu_idle_time(this_darkness_cpuinfo->cpu,
+		&cur_wall_time, io_busy);
 
 	wall_time = (unsigned int)
 			(cur_wall_time - this_darkness_cpuinfo->prev_cpu_wall);
@@ -224,8 +222,6 @@ static void darkness_check_cpu(struct cpufreq_darkness_cpuinfo *this_darkness_cp
 	idle_time = (unsigned int)
 			(cur_idle_time - this_darkness_cpuinfo->prev_cpu_idle);
 	this_darkness_cpuinfo->prev_cpu_idle = cur_idle_time;
-
-	/*printk(KERN_ERR "TIMER CPU[%u], wall[%u], idle[%u]\n",cpu, wall_time, idle_time);*/
 
 	/*if wall_time < idle_time or wall_time == 0, evaluate cpu load next time*/
 	if (unlikely(!wall_time || wall_time < idle_time))
@@ -246,11 +242,9 @@ static void do_darkness_timer(struct work_struct *work)
 {
 	struct cpufreq_darkness_cpuinfo *this_darkness_cpuinfo = 
 		container_of(work, struct cpufreq_darkness_cpuinfo, work.work);
-	unsigned int cpu;
 	int delay;
 
 	mutex_lock(&this_darkness_cpuinfo->timer_mutex);
-	cpu = this_darkness_cpuinfo->cpu;
 
 	darkness_check_cpu(this_darkness_cpuinfo);
 
@@ -262,7 +256,8 @@ static void do_darkness_timer(struct work_struct *work)
 		delay = max(delay - (jiffies % delay), usecs_to_jiffies(darkness_tuners_ins.sampling_rate / 2));
 	}
 
-	mod_delayed_work_on(cpu, system_wq, &this_darkness_cpuinfo->work, delay);
+	mod_delayed_work_on(this_darkness_cpuinfo->cpu,
+		system_wq, &this_darkness_cpuinfo->work, delay);
 	mutex_unlock(&this_darkness_cpuinfo->timer_mutex);
 }
 
@@ -289,7 +284,8 @@ static int cpufreq_governor_darkness(struct cpufreq_policy *policy,
 
 		this_darkness_cpuinfo->cur_policy = policy;
 
-		this_darkness_cpuinfo->prev_cpu_idle = get_cpu_idle_time(this_darkness_cpuinfo->cpu, &this_darkness_cpuinfo->prev_cpu_wall, io_busy);
+		this_darkness_cpuinfo->prev_cpu_idle = get_cpu_idle_time(this_darkness_cpuinfo->cpu,
+			&this_darkness_cpuinfo->prev_cpu_wall, io_busy);
 
 		darkness_enable++;
 		/*
@@ -317,7 +313,8 @@ static int cpufreq_governor_darkness(struct cpufreq_policy *policy,
 		}
 
 		INIT_DEFERRABLE_WORK(&this_darkness_cpuinfo->work, do_darkness_timer);
-		mod_delayed_work_on(this_darkness_cpuinfo->cpu, system_wq, &this_darkness_cpuinfo->work, delay);
+		mod_delayed_work_on(this_darkness_cpuinfo->cpu,
+			system_wq, &this_darkness_cpuinfo->work, delay);
 
 		break;
 	case CPUFREQ_GOV_STOP:
