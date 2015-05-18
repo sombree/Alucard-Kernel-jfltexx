@@ -73,6 +73,7 @@ struct cpufreq_alucard_cpuinfo {
 	bool governor_enabled;
 	unsigned int up_rate;
 	unsigned int down_rate;
+	unsigned int cpu;
 	/*
 	 * mutex that serializes governor limit change with
 	 * do_alucard_timer invocation. We do not want do_alucard_timer to run
@@ -516,7 +517,7 @@ static void alucard_check_cpu(struct cpufreq_alucard_cpuinfo *this_alucard_cpuin
 		 || (!this_alucard_cpuinfo->freq_table))
 		return;
 
-	cpu = policy->cpu;
+	cpu = this_alucard_cpuinfo->cpu;
 	/* Get min, current, max indexes from current cpu policy */
 	cpufreq_frequency_table_policy_limits(policy,
 			this_alucard_cpuinfo->freq_table,
@@ -594,7 +595,7 @@ static void do_alucard_timer(struct work_struct *work)
 	int delay;
 	
 	mutex_lock(&this_alucard_cpuinfo->timer_mutex);
-	cpu = this_alucard_cpuinfo->cur_policy->cpu;
+	cpu = this_alucard_cpuinfo->cpu;
 
 	alucard_check_cpu(this_alucard_cpuinfo);
 
@@ -623,7 +624,7 @@ static int cpufreq_governor_alucard(struct cpufreq_policy *policy,
 			return -EINVAL;
 
 		mutex_lock(&alucard_mutex);
-		cpu = policy->cpu;
+		this_alucard_cpuinfo->cpu = policy->cpu;
 
 		this_alucard_cpuinfo->freq_table = cpufreq_frequency_get_table(cpu);
 		if (!this_alucard_cpuinfo->freq_table) {
