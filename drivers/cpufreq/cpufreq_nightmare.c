@@ -46,6 +46,7 @@ struct cpufreq_nightmare_cpuinfo {
 	struct delayed_work work;
 	struct cpufreq_policy *cur_policy;
 	bool governor_enabled;
+	unsigned int cpu;
 	/*
 	 * mutex that serializes governor limit change with
 	 * do_nightmare_timer invocation. We do not want do_nightmare_timer to run
@@ -504,7 +505,7 @@ static void nightmare_check_cpu(struct cpufreq_nightmare_cpuinfo *this_nightmare
 		 || (!this_nightmare_cpuinfo->freq_table))
 		return;
 
-	cpu = policy->cpu;
+	cpu = this_nightmare_cpuinfo->cpu;
 
 	cur_idle_time = get_cpu_idle_time(cpu, &cur_wall_time, io_busy);
 
@@ -555,7 +556,7 @@ static void do_nightmare_timer(struct work_struct *work)
 	int delay;
 
 	mutex_lock(&this_nightmare_cpuinfo->timer_mutex);
-	cpu = this_nightmare_cpuinfo->cur_policy->cpu;
+	cpu = this_nightmare_cpuinfo->cpu;
 
 	nightmare_check_cpu(this_nightmare_cpuinfo);
 
@@ -585,7 +586,7 @@ static int cpufreq_governor_nightmare(struct cpufreq_policy *policy,
 			return -EINVAL;
 
 		mutex_lock(&nightmare_mutex);
-		cpu = policy->cpu;
+		this_nightmare_cpuinfo->cpu = policy->cpu;
 
 		this_nightmare_cpuinfo->freq_table = cpufreq_frequency_get_table(cpu);
 		if (!this_nightmare_cpuinfo->freq_table) {
