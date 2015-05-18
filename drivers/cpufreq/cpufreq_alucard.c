@@ -614,7 +614,6 @@ static int cpufreq_governor_alucard(struct cpufreq_policy *policy,
 				unsigned int event)
 {
 	struct cpufreq_alucard_cpuinfo *this_alucard_cpuinfo = &per_cpu(od_alucard_cpuinfo, policy->cpu);
-	unsigned int cpu;
 	int rc, delay;
 	int io_busy = alucard_tuners_ins.io_is_busy;
 
@@ -626,7 +625,7 @@ static int cpufreq_governor_alucard(struct cpufreq_policy *policy,
 		mutex_lock(&alucard_mutex);
 		this_alucard_cpuinfo->cpu = policy->cpu;
 
-		this_alucard_cpuinfo->freq_table = cpufreq_frequency_get_table(cpu);
+		this_alucard_cpuinfo->freq_table = cpufreq_frequency_get_table(this_alucard_cpuinfo->cpu);
 		if (!this_alucard_cpuinfo->freq_table) {
 			mutex_unlock(&alucard_mutex);
 			return -EINVAL;
@@ -634,7 +633,7 @@ static int cpufreq_governor_alucard(struct cpufreq_policy *policy,
 
 		this_alucard_cpuinfo->cur_policy = policy;
 	
-		this_alucard_cpuinfo->prev_cpu_idle = get_cpu_idle_time(cpu, &this_alucard_cpuinfo->prev_cpu_wall, io_busy);
+		this_alucard_cpuinfo->prev_cpu_idle = get_cpu_idle_time(this_alucard_cpuinfo->cpu, &this_alucard_cpuinfo->prev_cpu_wall, io_busy);
 
 		alucard_enable++;
 		/*
@@ -664,7 +663,7 @@ static int cpufreq_governor_alucard(struct cpufreq_policy *policy,
 		}
 
 		INIT_DEFERRABLE_WORK(&this_alucard_cpuinfo->work, do_alucard_timer);
-		mod_delayed_work_on(cpu, system_wq, &this_alucard_cpuinfo->work, delay);
+		mod_delayed_work_on(this_alucard_cpuinfo->cpu, system_wq, &this_alucard_cpuinfo->work, delay);
 
 		break;
 	case CPUFREQ_GOV_STOP:
