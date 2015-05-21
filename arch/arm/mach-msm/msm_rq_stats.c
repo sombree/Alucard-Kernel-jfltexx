@@ -254,13 +254,12 @@ static ssize_t store_hotplug_enable(struct kobject *kobj,
 	unsigned long flags = 0;
 	unsigned int cpu = 0;
 
-	spin_lock_irqsave(&rq_lock, flags);
 	ret = sscanf(buf, "%u", &val);
 	if (ret != 1 || val < 0 || val > 1) {
-		spin_unlock_irqrestore(&rq_lock, flags);
 		return -EINVAL;
 	}
 
+	spin_lock_irqsave(&rq_lock, flags);
 	if (val == rq_info.hotplug_enabled) {
 		spin_unlock_irqrestore(&rq_lock, flags);
 		return count;
@@ -334,7 +333,11 @@ static ssize_t run_queue_avg_show(struct kobject *kobj,
 {
 #ifdef CONFIG_MSM_RUN_QUEUE_STATS_BE_CONSERVATIVE
 	int nr_running = (avg_nr_running() * 10) >> FSHIFT;
-	return snprintf(buf, PAGE_SIZE, "%d.%d\n", nr_running/10, nr_running%10);
+	if (rq_info.hotplug_disabled)
+		return snprintf(buf, PAGE_SIZE, "%d.%d\n", 0, 5);
+	else
+		return snprintf(buf, PAGE_SIZE, "%d.%d\n",
+				nr_running/10, nr_running%10);
 #else
 	unsigned int val = 0;
 	unsigned long flags = 0;
@@ -345,7 +348,10 @@ static ssize_t run_queue_avg_show(struct kobject *kobj,
 	rq_info.rq_avg = 0;
 	spin_unlock_irqrestore(&rq_lock, flags);
 
-	return snprintf(buf, PAGE_SIZE, "%d.%d\n", val/10, val%10);
+	if (rq_info.hotplug_disabled)
+		return snprintf(buf, PAGE_SIZE, "%d.%d\n", 0, 1);
+	else
+		return snprintf(buf, PAGE_SIZE, "%d.%d\n", val/10, val%10);
 #endif
 }
 
@@ -395,12 +401,15 @@ static ssize_t show_def_timer_ms(struct kobject *kobj,
 	int64_t diff;
 	unsigned int udiff;
 
-	diff = ktime_to_ns(ktime_get()) - rq_info.def_start_time;
-	do_div(diff, 1000 * 1000);
-	udiff = (unsigned int) diff;
+	if (rq_info.hotplug_disabled) {
+		return snprintf(buf, MAX_LONG_SIZE, "%u\n", 5);
+	} else {
+		diff = ktime_to_ns(ktime_get()) - rq_info.def_start_time;
+		do_div(diff, 1000 * 1000);
+		udiff = (unsigned int) diff;
 
-
-	return snprintf(buf, MAX_LONG_SIZE, "%u\n", udiff);
+		return snprintf(buf, MAX_LONG_SIZE, "%u\n", udiff);
+	}
 }
 
 static ssize_t store_def_timer_ms(struct kobject *kobj,
@@ -409,9 +418,13 @@ static ssize_t store_def_timer_ms(struct kobject *kobj,
 	unsigned int val = 0;
 
 	sscanf(buf, "%u", &val);
-	rq_info.def_timer_jiffies = msecs_to_jiffies(val);
 
-	rq_info.def_start_time = ktime_to_ns(ktime_get());
+	if (rq_info.hotplug_disabled) {
+		val = 5;
+	} else {
+		rq_info.def_timer_jiffies = msecs_to_jiffies(val);
+		rq_info.def_start_time = ktime_to_ns(ktime_get());
+	}
 	return count;
 }
 
@@ -422,8 +435,8 @@ static struct kobj_attribute def_timer_ms_attr =
 static ssize_t show_cpu_normalized_load(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
 {
-	return snprintf(buf, MAX_LONG_SIZE, "%u\n",
-		rq_info.hotplug_enabled ? report_load_at_max_freq() : 0);
+		return snprintf(buf, MAX_LONG_SIZE, "%u\n",
+			rq_info.hotplug_enabled ? report_load_at_max_freq() : 0);
 }
 
 static struct kobj_attribute cpu_normalized_load_attr =
