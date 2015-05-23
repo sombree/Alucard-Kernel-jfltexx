@@ -822,7 +822,6 @@ EXPORT_SYMBOL(msm_rpm_send_request_noirq);
 int msm_rpm_wait_for_ack(uint32_t msg_id)
 {
 	struct msm_rpm_wait_data *elem;
-	int rc = 0;
 
 	if (!msg_id) {
 		pr_err("%s(): Invalid msg id\n", __func__);
@@ -830,22 +829,20 @@ int msm_rpm_wait_for_ack(uint32_t msg_id)
 	}
 
 	if (msg_id == 1)
-		return rc;
+		return 0;
 
 	if (standalone)
-		return rc;
+		return 0;
 
 	elem = msm_rpm_get_entry_from_msg_id(msg_id);
 	if (!elem)
-		return rc;
+		return 0;
 
 	wait_for_completion(&elem->ack);
 	trace_rpm_ack_recd(0, msg_id);
 
-	rc = elem->errno;
 	msm_rpm_free_list_entry(elem);
-
-	return rc;
+	return elem->errno;
 }
 EXPORT_SYMBOL(msm_rpm_wait_for_ack);
 
