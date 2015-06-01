@@ -15,7 +15,11 @@ export PACKAGEDIR=$KERNELDIR/READY-JB
 export USE_SEC_FIPS_MODE=true
 export ARCH=arm
 export CROSS_COMPILE=$PARENT_DIR/../sm-arm-eabi-4.10/bin/arm-eabi-
-export KERNEL_CONFIG=alucard_defconfig;
+if [! "$1" == "" ]; then
+    export KERNEL_CONFIG="$1";
+else
+    export KERNEL_CONFIG=alucard_defconfig;
+fi
 
 chmod -R 777 /tmp;
 
@@ -75,7 +79,7 @@ fi;
 . $KERNELDIR/.config;
 
 # get version from config
-GETVER=`grep 'Alucard-*-V' .config |sed 's/Alucard-//g' | sed 's/.*".//g' | sed 's/-A.*//g'`;
+GETVER=`grep 'Alucard-*-V' kernel_version |sed 's/Alucard-//g' | sed 's/.*".//g' | sed 's/-A.*//g'`;
 
 echo "Remove old zImage"
 # remove previous zImage files
