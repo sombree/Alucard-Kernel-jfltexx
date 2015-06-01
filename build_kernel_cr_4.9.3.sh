@@ -79,7 +79,7 @@ fi;
 . $KERNELDIR/.config;
 
 # get version from config
-GETVER=`grep 'Alucard-*-V' .config |sed 's/Alucard-//g' | sed 's/.*".//g' | sed 's/-G.*//g'`;
+GETVER=`grep 'Alucard-*-V' kernel_version |sed 's/Alucard-//g' | sed 's/.*".//g' | sed 's/-G.*//g'`;
 
 echo "Remove old zImage"
 # remove previous zImage files
