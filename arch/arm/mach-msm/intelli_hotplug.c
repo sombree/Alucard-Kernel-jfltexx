@@ -301,7 +301,7 @@ static void intelli_plug_suspend(struct work_struct *work)
 		min_cpus_online_res = min_cpus_online;
 		min_cpus_online = 1;
 		max_cpus_online_res = max_cpus_online;
-		max_cpus_online = 1;
+		max_cpus_online = 2;
 		mutex_unlock(&intelli_plug_mutex);
 
 		/* Flush hotplug workqueue */
