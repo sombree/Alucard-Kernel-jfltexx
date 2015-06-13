@@ -70,11 +70,14 @@ delete_recursive("/tmp/loki_flash");
 
 ui_print("Extracting files");
 ui_print("");
-package_extract_dir("fscheck", "/tmp");
+package_extract_dir("lokkernel", "/tmp");
 package_extract_file("boot.img", "/tmp/boot.img");
 ui_print("Setting permissions");
 ui_print("");
+set_perm(0, 0, 0777, "/tmp/loki_bootloaders");
 set_perm(0, 0, 0777, "/tmp/flash_kernel.sh");
+set_perm(0, 0, 0777, "/tmp/loki_patch");
+set_perm(0, 0, 0777, "/tmp/loki_flash");
 
 ui_print("Flashing new Kernel");
 ui_print("");
