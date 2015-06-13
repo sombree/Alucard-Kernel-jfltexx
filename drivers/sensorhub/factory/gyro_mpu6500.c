@@ -15,21 +15,6 @@
 #include <linux/kernel.h>
 #include "../ssp.h"
 
-<<<<<<< HEAD
-#if defined(CONFIG_MACH_JF_ATT) || defined(CONFIG_MACH_JF_TMO) || \
-	defined(CONFIG_MACH_JF_EUR) || defined(CONFIG_MACH_JF_USC) || \
-	defined(CONFIG_MACH_JF_SKT) || defined(CONFIG_MACH_JF_KTT) || \
-	defined(CONFIG_MACH_JF_LGT) || defined(CONFIG_MACH_JACTIVE_ATT) || \
-	defined(CONFIG_MACH_JF_CRI)
-#define K330_REV	10
-#elif defined(CONFIG_MACH_JF_SPR) || defined(CONFIG_MACH_JF_VZW) || \
-	defined(CONFIG_MACH_JF_DCM)
-#define K330_REV	11
-#elif defined(CONFIG_MACH_JACTIVE_EUR)
-#define K330_REV	12
-#endif
-=======
->>>>>>> 26e1c48... UNIFIED PLATFORM: With this patch I have fixed sensors for all samsung sg4 phone models! We can use global var for adapting changes for all different phone models!
 
 /*************************************************************************/
 /* factory Sysfs                                                         */
@@ -53,36 +38,14 @@
 #define DEF_RMS_SCALE_FOR_RMS (10000)
 #define DEF_SQRT_SCALE_FOR_RMS (100)
 
-<<<<<<< HEAD
-=======
 static unsigned int is_jf_eur = 0;
 
 static unsigned int k330_rev = 0;
 
->>>>>>> 26e1c48... UNIFIED PLATFORM: With this patch I have fixed sensors for all samsung sg4 phone models! We can use global var for adapting changes for all different phone models!
 static ssize_t gyro_vendor_show(struct device *dev,
 	struct device_attribute *attr, char *buf)
 {
-#ifdef K330_REV
 	struct ssp_data *data = dev_get_drvdata(dev);
-<<<<<<< HEAD
-#if defined(CONFIG_MACH_JF_EUR)
-	if (data->ap_rev == 13)
-		return sprintf(buf, "%s\n", VENDOR);
-	else if (data->ap_rev >= K330_REV)
-		return sprintf(buf, "%s\n", VENDOR_K330);
-	else
-		return sprintf(buf, "%s\n", VENDOR);
-#else
-	if (data->ap_rev >= K330_REV)
-		return sprintf(buf, "%s\n", VENDOR_K330);
-	else
-		return sprintf(buf, "%s\n", VENDOR);
-#endif
-#else
-	return sprintf(buf, "%s\n", VENDOR);
-#endif
-=======
 
 	if (k330_rev > 0) {
 		if (is_jf_eur == true) {
@@ -100,32 +63,12 @@ static ssize_t gyro_vendor_show(struct device *dev,
 		}
 	} else
 		return sprintf(buf, "%s\n", VENDOR);
->>>>>>> 26e1c48... UNIFIED PLATFORM: With this patch I have fixed sensors for all samsung sg4 phone models! We can use global var for adapting changes for all different phone models!
 }
 
 static ssize_t gyro_name_show(struct device *dev,
 	struct device_attribute *attr, char *buf)
 {
-#ifdef K330_REV
 	struct ssp_data *data = dev_get_drvdata(dev);
-<<<<<<< HEAD
-#if defined(CONFIG_MACH_JF_EUR)
-	if (data->ap_rev == 13)
-		return sprintf(buf, "%s\n", CHIP_ID);
-	else if (data->ap_rev >= K330_REV)
-		return sprintf(buf, "%s\n", CHIP_ID_K330);
-	else
-		return sprintf(buf, "%s\n", CHIP_ID);
-#else
-	if (data->ap_rev >= K330_REV)
-		return sprintf(buf, "%s\n", CHIP_ID_K330);
-	else
-		return sprintf(buf, "%s\n", CHIP_ID);
-#endif
-#else
-	return sprintf(buf, "%s\n", CHIP_ID);
-#endif
-=======
 
 	if (k330_rev > 0) {
 		if (is_jf_eur == true) {
@@ -143,7 +86,6 @@ static ssize_t gyro_name_show(struct device *dev,
 		}
 	} else
 		return sprintf(buf, "%s\n", CHIP_ID);
->>>>>>> 26e1c48... UNIFIED PLATFORM: With this patch I have fixed sensors for all samsung sg4 phone models! We can use global var for adapting changes for all different phone models!
 }
 
 int gyro_open_calibration(struct ssp_data *data)
@@ -302,25 +244,6 @@ static ssize_t gyro_get_temp(struct device *dev,
 {
 	short temperature = 0;
 	struct ssp_data *data = dev_get_drvdata(dev);
-<<<<<<< HEAD
-#ifdef K330_REV
-#if defined(CONFIG_MACH_JF_EUR)
-	if (data->ap_rev == 13)
-		temperature = mpu6500_gyro_get_temp(data);
-	else if (data->ap_rev >= K330_REV)
-		temperature = (short)k330_gyro_get_temp(data);
-	else
-		temperature = mpu6500_gyro_get_temp(data);
-#else
-	if (data->ap_rev >= K330_REV)
-		temperature = (short)k330_gyro_get_temp(data);
-	else
-		temperature = mpu6500_gyro_get_temp(data);
-#endif
-#else
-	temperature = mpu6500_gyro_get_temp(data);
-#endif
-=======
 
 	if (k330_rev > 0) {
 		if (is_jf_eur == true) {
@@ -339,7 +262,6 @@ static ssize_t gyro_get_temp(struct device *dev,
 	} else
 		temperature = mpu6500_gyro_get_temp(data);
 
->>>>>>> 26e1c48... UNIFIED PLATFORM: With this patch I have fixed sensors for all samsung sg4 phone models! We can use global var for adapting changes for all different phone models!
 	return sprintf(buf, "%d\n", temperature);
 }
 
@@ -713,25 +635,6 @@ static ssize_t gyro_selftest_show(struct device *dev,
 	struct device_attribute *attr, char *buf)
 {
 	struct ssp_data *data = dev_get_drvdata(dev);
-<<<<<<< HEAD
-#ifdef K330_REV
-#if defined(CONFIG_MACH_JF_EUR)
-	if (data->ap_rev == 13)
-		return mpu6500_gyro_selftest(buf, data);
-	else if (data->ap_rev >= K330_REV)
-		return k330_gyro_selftest(buf, data);
-	else
-		return mpu6500_gyro_selftest(buf, data);
-#else
-	if (data->ap_rev >= K330_REV)
-		return k330_gyro_selftest(buf, data);
-	else
-		return mpu6500_gyro_selftest(buf, data);
-#endif
-#else
-	return mpu6500_gyro_selftest(buf, data);
-#endif
-=======
 
 	if (k330_rev > 0) {
 		if (is_jf_eur == true) {
@@ -749,7 +652,6 @@ static ssize_t gyro_selftest_show(struct device *dev,
 		}
 	} else
 		return mpu6500_gyro_selftest(buf, data);
->>>>>>> 26e1c48... UNIFIED PLATFORM: With this patch I have fixed sensors for all samsung sg4 phone models! We can use global var for adapting changes for all different phone models!
 }
 
 static ssize_t gyro_selftest_dps_store(struct device *dev,
@@ -836,8 +738,6 @@ static struct device_attribute *gyro_attrs[] = {
 
 void initialize_gyro_factorytest(struct ssp_data *data)
 {
-<<<<<<< HEAD
-=======
 	if (samsung_hardware == GT_I9505)
 		is_jf_eur = true;
 
@@ -854,7 +754,6 @@ void initialize_gyro_factorytest(struct ssp_data *data)
 	else if (samsung_hardware == GT_I9295)
 		k330_rev = 12;
 
->>>>>>> 26e1c48... UNIFIED PLATFORM: With this patch I have fixed sensors for all samsung sg4 phone models! We can use global var for adapting changes for all different phone models!
 	sensors_register(data->gyro_device, data, gyro_attrs, "gyro_sensor");
 }
 
