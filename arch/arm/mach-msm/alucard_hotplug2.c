@@ -427,10 +427,7 @@ static int hotplug_start(void)
 
 	start_rq_work();
 
-	get_online_cpus();
-
-	register_hotcpu_notifier(&alucard_hotplug_nb);
-
+	cpu_notifier_register_begin();
 	if (num_online_cpus() > 1)
 			delay -= jiffies % delay;
 	if (delay <= 0)
@@ -454,7 +451,8 @@ static int hotplug_start(void)
 		}
 		
 	}
-	put_online_cpus();
+	__register_hotcpu_notifier(&alucard_hotplug_nb);
+	cpu_notifier_register_done();
 
 #if defined(CONFIG_POWERSUSPEND) || \
 	defined(CONFIG_HAS_EARLYSUSPEND)
@@ -484,16 +482,14 @@ static void hotplug_stop(void)
 	mutex_destroy(&hotplug_tuners_ins.alu_hotplug_mutex);
 #endif
 
-	get_online_cpus();
-
-	unregister_hotcpu_notifier(&alucard_hotplug_nb);
-
+	cpu_notifier_register_begin();
 	for_each_possible_cpu(cpu) {
 		struct hotplug_cpuinfo *pcpu_info = &per_cpu(od_hotplug_cpuinfo, cpu);
 
 		cancel_delayed_work_sync(&pcpu_info->work);
 	}
-	put_online_cpus();
+	__unregister_hotcpu_notifier(&alucard_hotplug_nb);
+	cpu_notifier_register_done();
 
 	stop_rq_work();
 
