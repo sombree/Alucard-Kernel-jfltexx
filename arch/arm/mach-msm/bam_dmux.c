@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2013, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2014, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -45,17 +45,17 @@
 
 #define LOW_WATERMARK		2
 #define HIGH_WATERMARK		4
-#define DEFAULT_POLLING_MIN_SLEEP (1000)
+#define DEFAULT_POLLING_MIN_SLEEP (950)
 #define MAX_POLLING_SLEEP (6050)
 #define MIN_POLLING_SLEEP (950)
 
 static int msm_bam_dmux_debug_enable;
 module_param_named(debug_enable, msm_bam_dmux_debug_enable,
 		   int, S_IRUGO | S_IWUSR | S_IWGRP);
-static int POLLING_MIN_SLEEP = 4950;
+static int POLLING_MIN_SLEEP = 2950;
 module_param_named(min_sleep, POLLING_MIN_SLEEP,
 		   int, S_IRUGO | S_IWUSR | S_IWGRP);
-static int POLLING_MAX_SLEEP = 5000;
+static int POLLING_MAX_SLEEP = 3050;
 module_param_named(max_sleep, POLLING_MAX_SLEEP,
 		   int, S_IRUGO | S_IWUSR | S_IWGRP);
 static int POLLING_INACTIVITY = 1;
@@ -64,6 +64,9 @@ module_param_named(inactivity, POLLING_INACTIVITY,
 static int bam_adaptive_timer_enabled;
 module_param_named(adaptive_timer_enabled,
 			bam_adaptive_timer_enabled,
+		   int, S_IRUGO | S_IWUSR | S_IWGRP);
+static int ul_wakeup_timeout = 10;
+module_param_named(ul_wakeup_response_timeout, ul_wakeup_timeout,
 		   int, S_IRUGO | S_IWUSR | S_IWGRP);
 
 static struct bam_ops_if bam_default_ops = {
@@ -229,9 +232,9 @@ static struct workqueue_struct *bam_mux_tx_workqueue;
 static struct srcu_struct bam_dmux_srcu;
 
 /* A2 power collaspe */
-#define UL_TIMEOUT_DELAY 300	/* in ms */
+#define UL_TIMEOUT_DELAY 1000	/* in ms */
 #define ENABLE_DISCONNECT_ACK	0x1
-#define SHUTDOWN_TIMEOUT_MS	2000
+#define SHUTDOWN_TIMEOUT_MS	500
 #define UL_WAKEUP_TIMEOUT_MS	2000
 static void toggle_apps_ack(void);
 static void reconnect_to_bam(void);
