@@ -999,9 +999,6 @@ static int msm_fb_blank_sub(int blank_mode, struct fb_info *info,
 	struct msm_fb_panel_data *pdata = NULL;
 	int ret = 0;
 
-	if (!op_enable)
-		return -EPERM;
-
 	pdata = (struct msm_fb_panel_data *)mfd->pdev->dev.platform_data;
 	if ((!pdata) || (!pdata->on) || (!pdata->off)) {
 		printk(KERN_ERR "msm_fb_blank_sub: no panel operation detected!\n");
@@ -1170,8 +1167,15 @@ static int msm_fb_blank(int blank_mode, struct fb_info *info)
 	}
 	msm_fb_pan_idle(mfd);
 	if (mfd->op_enable == 0) {
-		if (blank_mode == FB_BLANK_UNBLANK)
+		if (blank_mode == FB_BLANK_UNBLANK) {
 			mfd->suspend.panel_power_on = TRUE;
+			/* if unblank is called when system is in suspend,
+			wait for the system to resume */
+			while (mfd->suspend.op_suspend) {
+				pr_debug("waiting for system to resume\n");
+				msleep(20);
+			}
+		}
 		else
 			mfd->suspend.panel_power_on = FALSE;
 	}
@@ -1827,6 +1831,9 @@ static int msm_fb_open(struct fb_info *info, int user)
 	if (mfd->op_enable == 0) {
 		if (!mfd->ref_cnt && info->node == 2)
 			return -EPERM;
+		/* if system is in suspend mode, do not unblank */
+		mfd->ref_cnt++;
+		return 0;
 	}
 
 	if (!mfd->ref_cnt) {
@@ -1852,10 +1859,15 @@ static int msm_fb_open(struct fb_info *info, int user)
 	return 0;
 }
 
+static void msm_fb_free_base_pipe(struct msm_fb_data_type *mfd)
+{
+	return 	mdp4_overlay_free_base_pipe(mfd);
+}
+
 static int msm_fb_release_all(struct fb_info *info, boolean is_all)
 {
 	struct msm_fb_data_type *mfd = (struct msm_fb_data_type *)info->par;
-	int ret = 0;
+	int ret = 0, bl_level = 0;
 
 	if (!mfd->ref_cnt) {
 		MSM_FB_INFO("msm_fb_release: try to close unopened fb %d!\n",
@@ -1869,12 +1881,23 @@ static int msm_fb_release_all(struct fb_info *info, boolean is_all)
 		pm_runtime_put(info->dev);
 	} while (is_all && mfd->ref_cnt);
 
-	if ((!mfd->ref_cnt) && (mfd->op_enable)) {
-		if ((ret =
-		     msm_fb_blank_sub(FB_BLANK_POWERDOWN, info,
-				      mfd->op_enable)) != 0) {
-			printk(KERN_ERR "msm_fb_release: can't turn off display!\n");
-			return ret;
+	if (!mfd->ref_cnt) {
+		if (mfd->op_enable) {
+			if (info->node == 0) {
+				down(&mfd->sem);
+				bl_level = mfd->bl_level;
+				msm_fb_set_backlight(mfd, 0);
+				unset_bl_level = bl_level;
+				up(&mfd->sem);
+			}
+			ret = msm_fb_blank_sub(FB_BLANK_POWERDOWN, info,
+							mfd->op_enable);
+			if (ret != 0) {
+				printk(KERN_ERR "msm_fb_release: can't turn off display!\n");
+				return ret;
+			}
+		} else {
+			msm_fb_free_base_pipe(mfd);
 		}
 	}
 
