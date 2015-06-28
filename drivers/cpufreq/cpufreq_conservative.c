@@ -65,7 +65,7 @@ struct cpu_dbs_info_s {
 	struct cpufreq_policy *cur_policy;
 	struct delayed_work work;
 	unsigned int requested_freq;
-	int cpu;
+	unsigned int cpu;
 	unsigned int enable:1;
 	/*
 	 * percpu mutex that serializes governor limit change with

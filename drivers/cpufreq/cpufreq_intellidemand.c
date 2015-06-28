@@ -141,7 +141,7 @@ struct cpu_dbs_info_s {
 	unsigned int rate_mult;
 	unsigned int prev_load;
 	unsigned int max_load;
-	int cpu;
+	unsigned int cpu;
 	unsigned int sample_type:1;
 	unsigned int freq_stay_count;
 	/*

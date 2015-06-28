@@ -621,7 +621,7 @@ static void do_alucard_timer(struct work_struct *work)
 	struct cpufreq_alucard_cpuinfo *this_alucard_cpuinfo = 
 		container_of(work, struct cpufreq_alucard_cpuinfo, work.work);
 	int delay;
-	
+
 	mutex_lock(&this_alucard_cpuinfo->timer_mutex);
 
 	alucard_check_cpu(this_alucard_cpuinfo);

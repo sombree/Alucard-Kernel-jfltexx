@@ -103,7 +103,7 @@ struct cpu_dbs_info_s {
 	unsigned int freq_hi_jiffies;
 	unsigned int rate_mult;
 	unsigned int max_load;
-	int cpu;
+	unsigned int cpu;
 	unsigned int sample_type:1;
 	/*
 	 * percpu mutex that serializes governor limit change with
