@@ -56,6 +56,7 @@ struct cpufreq_interactive_cpuinfo {
 	u64 max_freq_hyst_start_time;
 	struct rw_semaphore enable_sem;
 	int governor_enabled;
+	unsigned int cpu;
 };
 
 static DEFINE_PER_CPU(struct cpufreq_interactive_cpuinfo, cpuinfo);
@@ -1250,20 +1251,24 @@ static int cpufreq_governor_interactive(struct cpufreq_policy *policy,
 {
 	int rc;
 	unsigned int j;
+	unsigned int cpu = policy->cpu;
 	struct cpufreq_interactive_cpuinfo *pcpu;
 	struct cpufreq_frequency_table *freq_table;
 	unsigned long flags;
 	unsigned int anyboost;
 
+	pcpu = &per_cpu(cpuinfo, policy->cpu);
+
 	switch (event) {
 	case CPUFREQ_GOV_START:
-		if (!cpu_online(policy->cpu))
+		if (!cpu_online(cpu))
 			return -EINVAL;
 
 		mutex_lock(&gov_lock);
 
 		freq_table =
-			cpufreq_frequency_get_table(policy->cpu);
+			cpufreq_frequency_get_table(cpu);
+		pcpu->cpu = cpu;
 		if (!hispeed_freq)
 			hispeed_freq = policy->max;
 		freq_calc_thresh = policy->cpuinfo.min_freq;
