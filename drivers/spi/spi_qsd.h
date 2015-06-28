@@ -41,8 +41,13 @@
 
 #define GSBI_CTRL_REG                 0x0
 #define GSBI_SPI_CONFIG               0x30
+/* B-family only registers */
 #define QUP_HARDWARE_VER              0x0030
+#define QUP_HARDWARE_VER_2_1_1        0X20010001
 #define QUP_OPERATIONAL_MASK          0x0028
+#define QUP_OP_MASK_OUTPUT_SERVICE_FLAG 0x100
+#define QUP_OP_MASK_INPUT_SERVICE_FLAG  0x200
+
 #define QUP_ERROR_FLAGS               0x0308
 
 #define SPI_CONFIG                    QSD_REG(0x0000) QUP_REG(0x0300)
@@ -67,12 +72,16 @@
 #define SPI_INPUT_FIFO                QSD_REG(0x0200) QUP_REG(0x0218)
 #define SPI_STATE                     QSD_REG(SPI_OPERATIONAL) QUP_REG(0x0004)
 
-/* SPI_CONFIG fields */
-#define SPI_CFG_INPUT_FIRST           0x00000200
+/* QUP_CONFIG fields */
+#define SPI_CFG_N                     0x0000001F
 #define SPI_NO_INPUT                  0x00000080
 #define SPI_NO_OUTPUT                 0x00000040
+#define SPI_EN_EXT_OUT_FLAG           0x00010000
+
+/* SPI_CONFIG fields */
 #define SPI_CFG_LOOPBACK              0x00000100
-#define SPI_CFG_N                     0x0000001F
+#define SPI_CFG_INPUT_FIRST           0x00000200
+#define SPI_CFG_HS_MODE               0x00000400
 
 /* SPI_IO_CONTROL fields */
 #define SPI_IO_C_FORCE_CS             0x00000800
@@ -137,6 +146,9 @@ enum msm_spi_state {
 #define SPI_NUM_CHIPSELECTS           4
 #define SPI_SUPPORTED_MODES  (SPI_CPOL | SPI_CPHA | SPI_CS_HIGH | SPI_LOOP)
 
+/* high speed mode is when bus rate is greater then 26MHz */
+#define SPI_HS_MIN_RATE               (26000000)
+
 #define SPI_DELAY_THRESHOLD           1
 /* Default timeout is 10 milliseconds */
 #define SPI_DEFAULT_TIMEOUT           10
@@ -148,8 +160,25 @@ enum msm_spi_state {
 /* Data Mover commands should be aligned to 64 bit(8 bytes) */
 #define DM_BYTE_ALIGN                 8
 
-#define SPI_QUP_VERSION_NONE      0x0
-#define SPI_QUP_VERSION_BFAM      0x2
+enum msm_spi_qup_version {
+	SPI_QUP_VERSION_NONE    = 0x0,
+	SPI_QUP_VERSION_BFAM    = 0x2,
+};
+
+enum msm_spi_pipe_direction {
+	SPI_BAM_CONSUMER_PIPE   = 0x0,
+	SPI_BAM_PRODUCER_PIPE   = 0x1,
+};
+
+#define SPI_BAM_MAX_DESC_NUM      32
+#define SPI_MAX_TRFR_BTWN_RESETS  ((64 * 1024) - 16)  /* 64KB - 16byte */
+
+enum msm_spi_clk_path_vec_idx {
+	MSM_SPI_CLK_PATH_SUSPEND_VEC = 0,
+	MSM_SPI_CLK_PATH_RESUME_VEC  = 1,
+};
+#define MSM_SPI_CLK_PATH_AVRG_BW(dd) (dd->pdata->max_clock_speed * 8)
+#define MSM_SPI_CLK_PATH_BRST_BW(dd) (dd->pdata->max_clock_speed * 8)
 
 static char const * const spi_rsrcs[] = {
 	"spi_clk",
@@ -231,6 +260,43 @@ static const struct {
 };
 #endif
 
+/**
+ * qup_i2c_clk_path_vote: data to use bus scaling driver for clock path vote
+ *
+ * @client_hdl when zero, client is not registered with the bus scaling driver,
+ *      and bus scaling functionality should not be used. When non zero, it
+ *      is a bus scaling client id and may be used to vote for clock path.
+ * @reg_err when true, registration error was detected and an error message was
+ *      logged. i2c will attempt to re-register but will log error only once.
+ *      once registration succeed, the flag is set to false.
+ */
+struct qup_i2c_clk_path_vote {
+	u32                         client_hdl;
+	struct msm_bus_scale_pdata *pdata;
+	bool                        reg_err;
+};
+
+struct msm_spi_bam_pipe {
+	const char              *name;
+	struct sps_pipe         *handle;
+	struct sps_connect       config;
+	bool                     teardown_required;
+};
+
+struct msm_spi_bam {
+	void __iomem            *base;
+	u32                      phys_addr;
+	u32                      handle;
+	u32                      irq;
+	struct msm_spi_bam_pipe  prod;
+	struct msm_spi_bam_pipe  cons;
+	bool                     deregister_required;
+	u32			 curr_rx_bytes_recvd;
+	u32			 curr_tx_bytes_sent;
+	u32			 bam_rx_len;
+	u32			 bam_tx_len;
+};
+
 struct msm_spi {
 	u8                      *read_buf;
 	const u8                *write_buf;
@@ -238,14 +304,12 @@ struct msm_spi {
 	struct device           *dev;
 	spinlock_t               queue_lock;
 	struct mutex             core_lock;
-	struct list_head         queue;
-	struct workqueue_struct *workqueue;
-	struct work_struct       work_data;
 	struct spi_message      *cur_msg;
 	struct spi_transfer     *cur_transfer;
 	struct completion        transfer_complete;
-	struct clk              *clk;
-	struct clk              *pclk;
+	struct clk              *clk;    /* core clock */
+	struct clk              *pclk;   /* interface clock */
+	struct qup_i2c_clk_path_vote clk_path_vote;
 	unsigned long            mem_phys_addr;
 	size_t                   mem_size;
 	int                      input_fifo_size;
@@ -273,6 +337,9 @@ struct msm_spi {
 	int                      tx_dma_crci;
 	int                      rx_dma_chan;
 	int                      rx_dma_crci;
+	int                      (*dma_init) (struct msm_spi *dd);
+	void                     (*dma_teardown) (struct msm_spi *dd);
+	struct msm_spi_bam       bam;
 	/* Data Mover Commands */
 	struct spi_dmov_cmd      *tx_dmov_cmd;
 	struct spi_dmov_cmd      *rx_dmov_cmd;
@@ -323,8 +390,10 @@ struct msm_spi {
 	int                      spi_gpios[ARRAY_SIZE(spi_rsrcs)];
 	/* SPI CS GPIOs for each slave */
 	struct spi_cs_gpio       cs_gpios[ARRAY_SIZE(spi_cs_rsrcs)];
-	int                      qup_ver;
+	enum msm_spi_qup_version qup_ver;
 	int			 max_trfr_len;
+	int			 num_xfrs_grped;
+	u16			 xfrs_delay_usec;
 };
 
 /* Forward declaration */
@@ -335,7 +404,7 @@ static inline int msm_spi_set_state(struct msm_spi *dd,
 				    enum msm_spi_state state);
 static void msm_spi_write_word_to_fifo(struct msm_spi *dd);
 static inline void msm_spi_write_rmn_to_fifo(struct msm_spi *dd);
-static inline irqreturn_t msm_spi_qup_irq(int irq, void *dev_id);
+static irqreturn_t msm_spi_qup_irq(int irq, void *dev_id);
 
 #if defined(CONFIG_SPI_QSD) || defined(CONFIG_SPI_QSD_MODULE)
 static inline void msm_spi_disable_irqs(struct msm_spi *dd)
@@ -387,7 +456,7 @@ static inline void msm_spi_get_clk_err(struct msm_spi *dd, u32 *spi_err) {}
 static inline void msm_spi_ack_clk_err(struct msm_spi *dd) {}
 static inline void msm_spi_set_qup_config(struct msm_spi *dd, int bpw) {}
 
-static inline int msm_spi_prepare_for_write(struct msm_spi *dd) { return 0; }
+static inline int  msm_spi_prepare_for_write(struct msm_spi *dd) { return 0; }
 static inline void msm_spi_start_write(struct msm_spi *dd, u32 read_count)
 {
 	msm_spi_write_word_to_fifo(dd);
@@ -443,16 +512,18 @@ static inline void msm_spi_ack_clk_err(struct msm_spi *dd)
 	writel_relaxed(QUP_ERR_MASK, dd->base + QUP_ERROR_FLAGS);
 }
 
-static inline void msm_spi_add_configs(struct msm_spi *dd, u32 *config, int n);
+static inline void
+msm_spi_set_bpw_and_no_io_flags(struct msm_spi *dd, u32 *config, int n);
 
-/* QUP has no_input, no_output, and N bits at QUP_CONFIG */
+/**
+ * msm_spi_set_qup_config: set QUP_CONFIG to no_input, no_output, and N bits
+ */
 static inline void msm_spi_set_qup_config(struct msm_spi *dd, int bpw)
 {
 	u32 qup_config = readl_relaxed(dd->base + QUP_CONFIG);
 
-	msm_spi_add_configs(dd, &qup_config, bpw-1);
-	writel_relaxed(qup_config | QUP_CONFIG_SPI_MODE,
-		       dd->base + QUP_CONFIG);
+	msm_spi_set_bpw_and_no_io_flags(dd, &qup_config, bpw-1);
+	writel_relaxed(qup_config | QUP_CONFIG_SPI_MODE, dd->base + QUP_CONFIG);
 }
 
 static inline int msm_spi_prepare_for_write(struct msm_spi *dd)
@@ -484,12 +555,22 @@ static inline void msm_spi_complete(struct msm_spi *dd)
 
 static inline void msm_spi_enable_error_flags(struct msm_spi *dd)
 {
-	writel_relaxed(0x00000078, dd->base + SPI_ERROR_FLAGS_EN);
+	if (dd->qup_ver == SPI_QUP_VERSION_BFAM)
+		writel_relaxed(
+			SPI_ERR_CLK_UNDER_RUN_ERR | SPI_ERR_CLK_OVER_RUN_ERR,
+			dd->base + SPI_ERROR_FLAGS_EN);
+	else
+		writel_relaxed(0x00000078, dd->base + SPI_ERROR_FLAGS_EN);
 }
 
 static inline void msm_spi_clear_error_flags(struct msm_spi *dd)
 {
-	writel_relaxed(0x0000007C, dd->base + SPI_ERROR_FLAGS);
+	if (dd->qup_ver == SPI_QUP_VERSION_BFAM)
+		writel_relaxed(
+			SPI_ERR_CLK_UNDER_RUN_ERR | SPI_ERR_CLK_OVER_RUN_ERR,
+			dd->base + SPI_ERROR_FLAGS);
+	else
+		writel_relaxed(0x0000007C, dd->base + SPI_ERROR_FLAGS);
 }
 
 #endif
