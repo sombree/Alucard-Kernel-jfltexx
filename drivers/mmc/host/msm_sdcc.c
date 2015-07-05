@@ -3349,7 +3349,8 @@ static void msmsdcc_msm_bus_queue_work(struct msmsdcc_host *host)
 
 	spin_lock_irqsave(&host->lock, flags);
 	if (host->msm_bus_vote.min_bw_vote != host->msm_bus_vote.curr_vote)
-		schedule_delayed_work(&host->msm_bus_vote.vote_work,
+		queue_delayed_work(system_nrt_wq,
+				   &host->msm_bus_vote.vote_work,
 				   msecs_to_jiffies(MSM_MMC_BUS_VOTING_DELAY));
 	spin_unlock_irqrestore(&host->lock, flags);
 }
@@ -5817,15 +5818,9 @@ static struct mmc_platform_data *msmsdcc_populate_pdata(struct device *dev)
 		goto err;
 	}
 
-	/*
-	 * Some devices might not use vdd. if qcom,not-use-vdd exists
-	 * skip the parse the vdd
-	 */
-	if (of_property_read_bool(np, "qcom,not-use-vdd") != true) {
-		if (msmsdcc_dt_parse_vreg_info(dev,
-				&pdata->vreg_data->vdd_data, "vdd"))
-			goto err;
-	}
+	if (msmsdcc_dt_parse_vreg_info(dev,
+			&pdata->vreg_data->vdd_data, "vdd"))
+		goto err;
 
 	if (msmsdcc_dt_parse_vreg_info(dev,
 			&pdata->vreg_data->vdd_io_data, "vdd-io"))
