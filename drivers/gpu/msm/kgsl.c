@@ -28,7 +28,6 @@
 #include <linux/msm_ion.h>
 #include <linux/io.h>
 #include <mach/socinfo.h>
-#include <mach/board.h>
 #include <linux/mman.h>
 
 #include "kgsl.h"
@@ -3588,7 +3587,6 @@ static int __init kgsl_core_init(void)
 {
 	int result = 0;
 	/* alloc major and minor device numbers */
-	place_marker("KGSL_Init - Start");
 	result = alloc_chrdev_region(&kgsl_driver.major, 0, KGSL_DEVICE_MAX,
 				  KGSL_NAME);
 	if (result < 0) {
@@ -3654,7 +3652,7 @@ static int __init kgsl_core_init(void)
 	}
 
 	kgsl_memfree_init();
-	place_marker("KGSL_Init - End");
+
 	return 0;
 
 err:
