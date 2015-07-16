@@ -14,12 +14,8 @@ export PACKAGEDIR=$KERNELDIR/READY-JB
 #Enable FIPS mode
 export USE_SEC_FIPS_MODE=true
 export ARCH=arm
-export CROSS_COMPILE=$PARENT_DIR/../cr-arm-eabi-4.9.3/bin/arm-eabi-
-if [! "$1" == "" ]; then
-    export KERNEL_CONFIG="$1";
-else
-    export KERNEL_CONFIG=alucard_defconfig;
-fi
+export CROSS_COMPILE=$PARENT_DIR/../cr-arm-eabi-4.9.4/bin/arm-eabi-
+export KERNEL_CONFIG=alucard_defconfig;
 
 chmod -R 777 /tmp;
 
