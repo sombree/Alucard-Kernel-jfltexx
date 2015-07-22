@@ -72,12 +72,6 @@ void arch_trigger_all_cpu_backtrace(void)
 }
 #endif
 
-int get_hlt(void)
-{
-	return hlt_counter;
-}
-EXPORT_SYMBOL(get_hlt);
-
 extern void call_with_stack(void (*fn)(void *), void *arg, void *sp);
 typedef void (*phys_reset_t)(unsigned long);
 
