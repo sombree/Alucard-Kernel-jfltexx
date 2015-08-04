@@ -45,10 +45,13 @@ void ssp_enable(struct ssp_data *data, bool enable)
 static irqreturn_t sensordata_irq_thread_fn(int iIrq, void *dev_id)
 {
 	struct ssp_data *data = dev_id;
+<<<<<<< HEAD
 	struct timespec ts;
 
 	get_monotonic_boottime(&ts);
 	data->timestamp = ts.tv_sec * 1000000000ULL + ts.tv_nsec;
+=======
+>>>>>>> 1705bda... Fix problem with sensors on GT-i9515 (jfvetle).
 
 	select_irq_msg(data);
 	data->uIrqCnt++;
