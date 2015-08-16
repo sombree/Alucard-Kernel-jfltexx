@@ -88,8 +88,12 @@ int nl_srv_init(void)
 #endif
                                        &cfg);
 #else
+      struct netlink_kernel_cfg cfg = {
+      .groups = WLAN_NLINK_MCAST_GRP_ID,
+      .input = nl_srv_rcv
+   };
    nl_srv_sock = netlink_kernel_create(&init_net, WLAN_NLINK_PROTO_FAMILY,
-      WLAN_NLINK_MCAST_GRP_ID, nl_srv_rcv, NULL, THIS_MODULE);
+      &cfg);
 #endif
 
    if (nl_srv_sock != NULL) {
