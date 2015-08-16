@@ -115,9 +115,6 @@
 #include <linux/bluetooth-power.h>
 #endif
 
-#ifdef CONFIG_SEC_DEBUG
-#include <mach/sec_debug.h>
-#endif
 #if defined(CONFIG_VIDEO_MHL_V2)
 #include <linux/sii8240.h>
 #endif
@@ -150,6 +147,10 @@
 #ifdef CONFIG_SEC_THERMISTOR
 #include <mach/sec_thermistor.h>
 #include <mach/fusion3-thermistor.h>
+#endif
+
+#ifdef CONFIG_KEXEC_HARDBOOT
+#include <asm/kexec.h>
 #endif
 
 #if defined(CONFIG_SENSORS_SSP)
@@ -298,7 +299,7 @@ static void max77693_haptic_power_onoff(int onoff)
 			printk(KERN_ERR"enable l8 failed, rc=%d\n", ret);
 			return;
 		}
-		printk(KERN_DEBUG"haptic power_on is finished.\n");
+		// printk(KERN_DEBUG"haptic power_on is finished.\n");
 	} else {
 		if (regulator_is_enabled(reg_l8)) {
 			ret = regulator_disable(reg_l8);
@@ -308,7 +309,7 @@ static void max77693_haptic_power_onoff(int onoff)
 				return;
 			}
 		}
-		printk(KERN_DEBUG"haptic power_off is finished.\n");
+		// printk(KERN_DEBUG"haptic power_off is finished.\n");
 	}
 }
 #endif
@@ -548,8 +549,6 @@ static void __init reserve_rtb_memory(void)
 {
 #if defined(CONFIG_MSM_RTB)
 	apq8064_reserve_table[MEMTYPE_EBI1].size += apq8064_rtb_pdata.size;
-	pr_info("mem_map: rtb reserved with size 0x%x in pool\n",
-			apq8064_rtb_pdata.size);
 #endif
 }
 
@@ -583,8 +582,6 @@ static void __init reserve_pmem_memory(void)
 	reserve_memory_for(&android_pmem_audio_pdata);
 #endif /*CONFIG_MSM_MULTIMEDIA_USE_ION*/
 	apq8064_reserve_table[MEMTYPE_EBI1].size += msm_contig_mem_size;
-	pr_info("mem_map: contig_mem reserved with size 0x%x in pool\n",
-			msm_contig_mem_size);
 #endif /*CONFIG_ANDROID_PMEM*/
 }
 
@@ -773,9 +770,6 @@ static void __init apq8064_reserve_fixed_area(unsigned long fixed_area_size)
 
 	ret = memblock_remove(reserve_info->fixed_area_start,
 		reserve_info->fixed_area_size);
-	pr_info("mem_map: fixed_area reserved at 0x%lx with size 0x%lx\n",
-			reserve_info->fixed_area_start,
-			reserve_info->fixed_area_size);
 	BUG_ON(ret);
 #endif
 }
@@ -908,9 +902,6 @@ static void __init reserve_ion_memory(void)
 		BUG_ON(!IS_ALIGNED(fixed_low_size + HOLE_SIZE, SECTION_SIZE));
 		ret = memblock_remove(fixed_low_start,
 				      fixed_low_size + HOLE_SIZE);
-		pr_info("mem_map: fixed_low_area reserved at 0x%lx with size \
-				0x%x\n", fixed_low_start,
-				fixed_low_size + HOLE_SIZE);
 		BUG_ON(ret);
 	}
 
@@ -921,9 +912,6 @@ static void __init reserve_ion_memory(void)
 	} else {
 		BUG_ON(!IS_ALIGNED(fixed_middle_size, SECTION_SIZE));
 		ret = memblock_remove(fixed_middle_start, fixed_middle_size);
-		pr_info("mem_map: fixed_middle_area reserved at 0x%lx with \
-				size 0x%x\n", fixed_middle_start,
-				fixed_middle_size);
 		BUG_ON(ret);
 	}
 
@@ -935,9 +923,6 @@ static void __init reserve_ion_memory(void)
 		/* This is the end of the fixed area so it's okay to round up */
 		fixed_high_size = ALIGN(fixed_high_size, SECTION_SIZE);
 		ret = memblock_remove(fixed_high_start, fixed_high_size);
-		pr_info("mem_map: fixed_high_area reserved at 0x%lx with size \
-				0x%x\n", fixed_high_start,
-				fixed_high_size);
 		BUG_ON(ret);
 	}
 
@@ -993,8 +978,23 @@ static void __init reserve_ion_memory(void)
 }
 
 #ifdef CONFIG_ANDROID_RAM_CONSOLE
+static char bootreason[128] = {0,};
+int __init device_boot_reason(char *s)
+{
+    int n;
+ 
+    if (*s == '=')
+        s++;
+    n = snprintf(bootreason, sizeof(bootreason),
+         "Boot info:\n"
+         "Last boot reason: %s\n", s);
+    bootreason[n] = '\0';
+    return 1;
+}
+__setup("bootreason", device_boot_reason);
+ 
 static struct ram_console_platform_data ram_console_pdata = {
-	.bootinfo = NULL,
+    .bootinfo = bootreason,
 };
 
 static struct platform_device ram_console_device = {
@@ -1011,7 +1011,15 @@ static struct platform_device ram_console_device = {
 static struct persistent_ram_descriptor per_ram_descs[] __initdata = {
        {
                .name = "ram_console",
+               .#ifdef CONFIG_KEXEC_HARDBOOT
+               .size = KEXEC_HB_PAGE_ADDR - RAMCONSOLE_PHYS_ADDR,
+       },
+       {
+               .name = "kexec_hb_page",
+               .size = SZ_1M - (KEXEC_HB_PAGE_ADDR - RAMCONSOLE_PHYS_ADDR),
+#else
                .size = SZ_1M,
+#endif
        }
 };
 
@@ -1036,8 +1044,6 @@ static void __init reserve_cache_dump_memory(void)
 	total = apq8064_cache_dump_pdata.l1_size +
 		apq8064_cache_dump_pdata.l2_size;
 	apq8064_reserve_table[MEMTYPE_EBI1].size += total;
-	pr_info("mem_map: cache_dump reserved with size 0x%x in pool\n",
-			total);
 #endif
 }
 
@@ -3143,7 +3149,11 @@ static struct platform_device msm_tsens_device = {
 static struct msm_thermal_data msm_thermal_pdata = {
 	.sensor_id = 7,
 	.poll_ms = 250,
-	.limit_temp_degC = 60,
+#ifdef CONFIG_CPU_OVERCLOCK
+	.limit_temp_degC = 80,
+#else
+	.limit_temp_degC = 70,
+#endif
 	.temp_hysteresis_degC = 10,
 	.freq_step = 2,
 	.core_limit_temp_degC = 80,
@@ -3158,9 +3168,6 @@ static void __init apq8064_map_io(void)
 	msm_map_apq8064_io();
 	if (socinfo_init() < 0)
 		pr_err("socinfo_init() failed!\n");
-#ifdef CONFIG_SEC_DEBUG
-	sec_getlog_supply_meminfo(0x40000000, 0x80000000, 0x00, 0x00);
-#endif
 }
 
 static void __init apq8064_init_irq(void)
@@ -4048,7 +4055,6 @@ static struct platform_device *cdp_devices[] __initdata = {
 #ifdef CONFIG_MSM_ROTATOR
 	&msm_rotator_device,
 #endif
-	&msm8064_pc_cntr,
 	&msm8064_cpu_slp_status,
 	&sec_device_jack,
 #ifdef CONFIG_SENSORS_SSP_C12SD
@@ -5208,6 +5214,7 @@ static void __init apq8064_bt_power_init(void)
 static void __init apq8064_common_init(void)
 {
 	u32 platform_version = socinfo_get_platform_version();
+	struct msm_rpmrs_level rpmrs_level;
 
 #ifdef CONFIG_KEYBOARD_CYPRESS_TOUCH_236
 	int ret;
@@ -5221,11 +5228,12 @@ static void __init apq8064_common_init(void)
 	if (cpu_is_apq8064ab())
 		apq8064ab_update_krait_spm();
 	if (cpu_is_krait_v3()) {
-		msm_pm_set_tz_retention_flag(0);
+		struct msm_pm_init_data_type *pdata =
+		      msm8064_pm_8x60.dev.platform_data;
+		pdata->retention_calls_tz = false;
 		apq8064ab_update_retention_spm();
-	} else {
-		msm_pm_set_tz_retention_flag(1);
 	}
+	platform_device_register(&msm8064_pm_8x60);
 	msm_spm_init(msm_spm_data, ARRAY_SIZE(msm_spm_data));
 	msm_spm_l2_init(msm_spm_l2_data);
 	msm_tsens_early_init(&apq_tsens_pdata);
@@ -5297,8 +5305,12 @@ static void __init apq8064_common_init(void)
 			platform_device_register(&touchkey_i2c_gpio_device_2);
 #endif
 
-	msm_hsic_pdata.swfi_latency =
-		msm_rpmrs_levels[0].latency_us;
+	rpmrs_level =
+        msm_rpmrs_levels[MSM_PM_SLEEP_MODE_WAIT_FOR_INTERRUPT];
+    msm_hsic_pdata.swfi_latency = rpmrs_level.latency_us;
+    rpmrs_level =
+        msm_rpmrs_levels[MSM_PM_SLEEP_MODE_POWER_COLLAPSE_STANDALONE];
+    msm_hsic_pdata.standalone_latency = rpmrs_level.latency_us;
 	if (machine_is_apq8064_mtp() || machine_is_JF()) {
 		msm_hsic_pdata.log2_irq_thresh = 5,
 		apq8064_device_hsic_host.dev.platform_data = &msm_hsic_pdata;
